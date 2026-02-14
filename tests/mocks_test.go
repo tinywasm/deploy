@@ -99,14 +99,16 @@ func (m *MockKeyManager) Set(service, user, password string) error {
 
 // MockHealthChecker records calls to Check.
 type MockHealthChecker struct {
-	mu         sync.Mutex
-	Responses  map[string]*deploy.HealthStatus
-	ShouldFail bool
+	mu             sync.Mutex
+	Responses      map[string]*deploy.HealthStatus
+	QueueResponses map[string][]*deploy.HealthStatus // Queue of responses
+	ShouldFail     bool
 }
 
 func NewMockHealthChecker() *MockHealthChecker {
 	return &MockHealthChecker{
-		Responses: make(map[string]*deploy.HealthStatus),
+		Responses:      make(map[string]*deploy.HealthStatus),
+		QueueResponses: make(map[string][]*deploy.HealthStatus),
 	}
 }
 
@@ -116,6 +118,17 @@ func (m *MockHealthChecker) Check(url string) (*deploy.HealthStatus, error) {
 	if m.ShouldFail {
 		return nil, fmt.Errorf("mock health check failed")
 	}
+
+	// Check queue first
+	if queue, ok := m.QueueResponses[url]; ok && len(queue) > 0 {
+		status := queue[0]
+		m.QueueResponses[url] = queue[1:]
+		if status == nil {
+			return nil, fmt.Errorf("mock scheduled failure")
+		}
+		return status, nil
+	}
+
 	status, ok := m.Responses[url]
 	if !ok {
 		return &deploy.HealthStatus{Status: "ok", CanRestart: true}, nil

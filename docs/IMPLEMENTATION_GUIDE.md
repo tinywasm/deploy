@@ -56,59 +56,10 @@ Implement components in this strict order. All logic files reside in the root `d
 ## 5. Key Contracts
 
 ### Configuration
-```go
-type Config struct {
-    Port     int        // default: 8080
-    LogLevel string
-    LogFile  string
-    TempDir  string
-    Apps     []AppConfig
-}
-
-type AppConfig struct {
-    Name           string
-    Version        string
-    Executable     string
-    Path           string
-    Port           int
-    HealthEndpoint     string
-    HealthTimeout      time.Duration
-    StartupDelay       time.Duration
-    BusyRetryInterval  time.Duration // default: 10s
-    BusyTimeout        time.Duration // default: 5m
-    Rollback           RollbackConfig
-}
-```
+See [config.go](../config.go)
 
 ### Dependency Injection (Testability)
-
-To ensure robust testing without side effects (executing processes, network calls, system keyring), all external interactions must be decoupled via interfaces.
-
-```go
-// defined in deploy.go or specific files
-type KeyManager interface {
-    Get(service, user string) (string, error)
-    Set(service, user, password string) error
-}
-
-type ProcessManager interface {
-    Start(exePath string) error
-    Stop(exeName string) error
-    // potentially CheckHealth, etc.
-}
-
-type Downloader interface {
-    Download(url, dest string, token string) error
-}
-
-// Deploy struct must accept these interfaces
-type Deploy struct {
-    Keyring    KeyManager
-    ProcMan    ProcessManager
-    Downloader Downloader
-    // ... other dependencies
-}
-```
+See interfaces in [deploy.go](../deploy.go) and [downloader.go](../downloader.go) and [manager.go](../manager.go).
 
 **Implementation Strategy:**
 - **Production (`cmd/deploy/main.go`)**: 
@@ -121,10 +72,7 @@ type Deploy struct {
     - `MockDownloader`: Simulates file creation or network errors; does NOT make HTTP requests.
 
 ### Execution Flow (`Deploy.Run`)
-1. Attempt to load `config.yaml` (create default if missing).
-2. If `Keys.IsConfigured()` is false, execute `setup.NewWizard().Run()`.
-3. Check for `--admin` flag to run the admin menu (Phase 2 feature).
-4. Launch the HTTP server on configured port.
+See [deploy.go](../deploy.go) logic.
 
 ### Update Handler (`POST /update`)
 The full orchestration flow is detailed in [PROCESS_FLOW](diagrams/PROCESS_FLOW.md) and [WORKFLOW](diagrams/WORKFLOW.md). The handler must implement the **Polling Loop** for busy applications, retrying the health check until `can_restart: true` or the `BusyTimeout` is reached.
@@ -194,120 +142,11 @@ Since some behaviors depend on Windows internals:
 
 ## 8. Reference Implementation
 
-Below are the base implementations for key components. These follow the interfaces defined in §5.
+### 8.1 HMAC Validation
+See [hmac.go](../hmac.go)
 
-### 8.1 HMAC Validation (`hmac.go`)
-```go
-package deploy
+### 8.2 Downloader
+See [downloader.go](../downloader.go)
 
-import (
-    "crypto/hmac"
-    "crypto/sha256"
-    "crypto/subtle"
-    "encoding/hex"
-    "fmt"
-    "strings"
-)
-
-type HMACValidator struct {
-    secret []byte
-}
-
-func NewHMACValidator(secret string) *HMACValidator {
-    return &HMACValidator{secret: []byte(secret)}
-}
-
-func (v *HMACValidator) ValidateRequest(payload []byte, signature string) error {
-    if !strings.HasPrefix(signature, "sha256=") {
-        return fmt.Errorf("invalid signature format")
-    }
-    providedSig := strings.TrimPrefix(signature, "sha256=")
-    providedBytes, err := hex.DecodeString(providedSig)
-    if err != nil {
-        return fmt.Errorf("invalid hex signature: %w", err)
-    }
-    
-    mac := hmac.New(sha256.New, v.secret)
-    mac.Write(payload)
-    if subtle.ConstantTimeCompare(providedBytes, mac.Sum(nil)) != 1 {
-        return fmt.Errorf("signature mismatch")
-    }
-    return nil
-}
-```
-
-### 8.2 Downloader (`downloader.go`)
-```go
-package deploy
-
-import (
-    "fmt"
-    "io"
-    "net/http"
-    "os"
-    "path/filepath"
-    "time"
-)
-
-type HTTPDownloader struct {
-    client *http.Client
-}
-
-func NewDownloader() *HTTPDownloader {
-    return &HTTPDownloader{client: &http.Client{Timeout: 10 * time.Minute}}
-}
-
-func (d *HTTPDownloader) Download(url, dest, token string) error {
-    if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
-        return err
-    }
-    req, _ := http.NewRequest("GET", url, nil)
-    req.Header.Set("Authorization", "Bearer "+token)
-    req.Header.Set("Accept", "application/octet-stream")
-    
-    resp, err := d.client.Do(req)
-    if err != nil { return err }
-    defer resp.Body.Close()
-    
-    if resp.StatusCode != http.StatusOK {
-        return fmt.Errorf("download failed: %d", resp.StatusCode)
-    }
-    
-    out, err := os.Create(dest)
-    if err != nil { return err }
-    defer out.Close()
-    _, err = io.Copy(out, resp.Body)
-    return err
-}
-```
-
-### 8.3 Windows Management (`manager.go` / `shortcut.go`)
-
-#### Process Manager
-```go
-package deploy
-
-import (
-    "os/exec"
-    "syscall"
-    "time"
-)
-
-type WindowsManager struct{}
-
-func (m *WindowsManager) Stop(exeName string) error {
-    cmd := exec.Command("taskkill", "/F", "/IM", exeName)
-    cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-    return cmd.Run() // Ignore "not found" error in actual implementation logic
-}
-
-func (m *WindowsManager) Start(exePath string) error {
-    cmd := exec.Command(exePath)
-    cmd.SysProcAttr = &syscall.SysProcAttr{
-        HideWindow:    true,
-        CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
-    }
-    return cmd.Start()
-}
-```
-
+### 8.3 Windows Management
+See [manager_windows.go](../manager_windows.go) and [shortcut_windows.go](../shortcut_windows.go)

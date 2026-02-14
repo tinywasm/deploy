@@ -11,7 +11,9 @@ import (
 
 func TestWizard_Run(t *testing.T) {
 	keys := NewMockKeyManager()
-	stdin := bytes.NewBufferString("myhmac\nmygithubpat\n")
+	// Input: 1 (Auto Setup) -> HMAC (min 32) -> PAT (ghp_)
+	input := "1\nmyhmac_secret_must_be_at_least_32_chars_long\nghp_mygithubpat\n"
+	stdin := bytes.NewBufferString(input)
 	stdout := new(bytes.Buffer)
 
 	wizard := &deploy.Wizard{
@@ -29,25 +31,30 @@ func TestWizard_Run(t *testing.T) {
 	if err != nil {
 		t.Errorf("hmac secret not found")
 	}
-	if hmac != "myhmac" {
-		t.Errorf("expected hmac 'myhmac', got '%s'", hmac)
+	expectedHMAC := "myhmac_secret_must_be_at_least_32_chars_long"
+	if hmac != expectedHMAC {
+		t.Errorf("expected hmac '%s', got '%s'", expectedHMAC, hmac)
 	}
 
 	pat, err := keys.Get("github", "pat")
 	if err != nil {
 		t.Errorf("github pat not found")
 	}
-	if pat != "mygithubpat" {
-		t.Errorf("expected pat 'mygithubpat', got '%s'", pat)
+	expectedPAT := "ghp_mygithubpat"
+	if pat != expectedPAT {
+		t.Errorf("expected pat '%s', got '%s'", expectedPAT, pat)
 	}
 }
 
 func TestWizard_Run_Partial(t *testing.T) {
 	keys := NewMockKeyManager()
+	// If one key exists but other missing, Run() calls MainLoop which prompts for both.
+	// We simulate this by only setting one key.
 	keys.Set("github", "pat", "existing_pat")
 
-	// Missing hmac. Should prompt for both.
-	stdin := bytes.NewBufferString("newhmac\nnewpat\n")
+	// Input: 1 (Auto Setup) -> HMAC -> PAT
+	input := "1\nnewhmac_secret_must_be_at_least_32_chars_long\nghp_newpat\n"
+	stdin := bytes.NewBufferString(input)
 	stdout := new(bytes.Buffer)
 
 	wizard := &deploy.Wizard{
@@ -64,16 +71,18 @@ func TestWizard_Run_Partial(t *testing.T) {
 	if err != nil {
 		t.Errorf("hmac secret not found")
 	}
-	if hmac != "newhmac" {
-		t.Errorf("expected hmac 'newhmac', got '%s'", hmac)
+	expectedHMAC := "newhmac_secret_must_be_at_least_32_chars_long"
+	if hmac != expectedHMAC {
+		t.Errorf("expected hmac '%s', got '%s'", expectedHMAC, hmac)
 	}
 
 	pat, err := keys.Get("github", "pat")
 	if err != nil {
 		t.Errorf("github pat not found")
 	}
-	if pat != "newpat" {
-		t.Errorf("expected pat 'newpat', got '%s'", pat)
+	expectedPAT := "ghp_newpat"
+	if pat != expectedPAT {
+		t.Errorf("expected pat '%s', got '%s'", expectedPAT, pat)
 	}
 }
 
