@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,8 +10,20 @@ import (
 )
 
 func main() {
+	admin := flag.Bool("admin", false, "Run admin menu")
+	flag.Parse()
+
 	// Initialize dependencies
 	keys := deploy.NewSystemKeyManager()
+
+	if *admin {
+		wizard := deploy.NewWizard(keys)
+		if err := wizard.RunAdmin(); err != nil {
+			log.Fatalf("admin menu failed: %v", err)
+		}
+		return
+	}
+
 	process := deploy.NewProcessManager()
 	downloader := deploy.NewDownloader()
 	checker := deploy.NewChecker()

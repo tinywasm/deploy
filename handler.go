@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 type UpdateRequest struct {
@@ -19,6 +21,7 @@ type UpdateRequest struct {
 
 type Handler struct {
 	Config     *Config
+	ConfigPath string
 	Validator  *HMACValidator
 	Downloader Downloader
 	Process    ProcessManager
@@ -136,6 +139,11 @@ WaitLoop:
 	// 9. Start New Process
 	if err := h.Process.Start(appPath); err != nil {
 		// Rollback
+		// Rename failed binary to app-failed.exe
+		failedPath := filepath.Join(app.Path, "app-failed.exe")
+		_ = os.Remove(failedPath) // Ensure target doesn't exist (Windows)
+		_ = os.Rename(appPath, failedPath)
+
 		_ = os.Rename(backupPath, appPath)
 		_ = h.Process.Start(appPath) // Try to restart old version
 		http.Error(w, fmt.Sprintf("Failed to start: %v", err), http.StatusInternalServerError)
@@ -151,10 +159,26 @@ WaitLoop:
 	if err != nil || newStatus.Status != "ok" { // Assuming "ok" is success criteria
 		// Rollback
 		_ = h.Process.Stop(app.Executable)
+
+		// Rename failed binary to app-failed.exe
+		failedPath := filepath.Join(app.Path, "app-failed.exe")
+		_ = os.Remove(failedPath) // Ensure target doesn't exist
+		_ = os.Rename(appPath, failedPath)
+
 		_ = os.Rename(backupPath, appPath)
 		_ = h.Process.Start(appPath)
 		http.Error(w, "New version failed health check", http.StatusInternalServerError)
 		return
+	}
+
+	// 11. Update Config (Version)
+	if req.Tag != "" {
+		app.Version = req.Tag
+		if h.ConfigPath != "" {
+			if data, err := yaml.Marshal(h.Config); err == nil {
+				_ = os.WriteFile(h.ConfigPath, data, 0644)
+			}
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

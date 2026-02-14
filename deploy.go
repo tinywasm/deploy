@@ -73,6 +73,7 @@ func (d *Deploy) Run() error {
 
 	handler := &Handler{
 		Config:     cfg,
+		ConfigPath: d.ConfigPath,
 		Validator:  NewHMACValidator(hmacSecret),
 		Downloader: d.Downloader,
 		Process:    d.Process,
