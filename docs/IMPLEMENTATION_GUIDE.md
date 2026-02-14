@@ -150,3 +150,43 @@ See [downloader.go](../downloader.go)
 
 ### 8.3 Windows Management
 See [manager_windows.go](../manager_windows.go) and [shortcut_windows.go](../shortcut_windows.go)
+
+## 9. RFC: Dual Purpose Support (Client vs Server)
+
+This section analyzes the proposal to split the application into two distinct binaries: a developer-side CLI and a server-side Agent.
+
+### 9.1 Questions & Considerations
+
+1.  **Authentication**: How will the CLI authenticate with the Server?
+    *   *Current*: Webhook uses HMAC.
+    *   *Proposal*: CLI generates the HMAC secret during the Wizard setup and stores it in the repository secrets (via GH Actions) and `config.yaml` on the server. The CLI itself doesn't talk directly to the server; it talks to GitHub (via `git push` or Action trigger), which then talks to the server.
+2.  **State Management**:
+    *   Server needs to know it's "configured".
+    *   CLI needs to know if the project is "configured".
+    *   *Solution*: CLI checks for `.github/workflows/deploy.yml` existence as a proxy for configuration.
+3.  **Code Sharing**:
+    *   Both binaries share `hmac.go`, `config.go`, etc.
+    *   *Constraint*: Must maintain flat structure in `deploy/`.
+    *   *Solution*: `cmd/deploy/main.go` and `cmd/updater/main.go` will both import from `github.com/tinywasm/deploy`.
+
+### 9.2 Suggestions
+
+*   **CLI Library**: Consider using `cobra` or `urfave/cli` for the `cmd/deploy` tool if flags become complex. For now, standard `flag` package is sufficient as per "Zero External Libraries" preference, though not strictly forbidden for the CLI part if needed.
+*   **Version Control**: The CLI should verify it's on the `main` branch (or configured production branch) before allowing a deploy trigger to prevent accidental deployments of feature branches.
+
+### 9.3 Pros & Cons
+
+| Strategy | Pros | Cons |
+|---|---|---|
+| **Single Binary (Current)** | Easier distribution (one file). | Confusing usage (flag switches). Bloated binary (server code on dev machine). |
+| **Dual Binary (Proposed)** | Clear separation of concerns. Smaller attack surface on server. specialized dependencies. | Two build artifacts. Slightly more complex build pipeline. |
+
+### 9.4 Best Option / Recommendation
+
+**Adopt the Dual Binary Strategy.**
+
+The clear separation between "Developer Tools" and "Runtime Agent" aligns best with security best practices and usability.
+*   `cmd/deploy`: Focuses on UX, wizard, and git integration.
+*   `cmd/updater`: Focuses on stability, uptime, and process management.
+
+See [DUAL_PURPOSE_SUPPORT.md](DUAL_PURPOSE_SUPPORT.md) for the detailed implementation plan.
