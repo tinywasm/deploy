@@ -151,7 +151,7 @@ func (w *Wizard) clearScreen() {
 	// Simple ANSI clear screen, might not work on all Windows terminals but fine for now
 	// fmt.Fprint(w.Stdout, "\033[H\033[2J")
 	// Or just newlines
-	fmt.Fprintln(w.Stdout, "\n\n")
+	fmt.Fprint(w.Stdout, "\n\n\n")
 }
 
 // RunAdmin launches the admin menu.
