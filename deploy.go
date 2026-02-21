@@ -1,12 +1,13 @@
 // Package deploy implements a lightweight continuous deployment agent.
-// It supports two modes:
+// It supports three modes:
+//   - cloudflare: uploads build artifacts to Cloudflare Pages via API.
 //   - webhook: an HTTP daemon on the server that GitHub Actions triggers via POST.
 //   - ssh: generates a shell script that GitHub Actions runs via SSH on the server.
 //
 // Usage:
 //
-//	d := deploy.New(keys, mgr, downloader, checker, files)
-//	d.Run("deploy.yaml")
+//	d := &deploy.Deploy{Store: db, Process: mgr, Downloader: dl, Checker: checker}
+//	d.Run()
 package deploy
 
 import (
@@ -15,69 +16,77 @@ import (
 	"os"
 )
 
-// KeyManager defines the interface for managing secrets.
-type KeyManager interface {
-	Get(service, user string) (string, error)
-	Set(service, user, password string) error
-}
-
+// Deploy is the main orchestrator for all deployment modes.
+// Store must be injected — kvdb.KVStore satisfies the Store interface directly.
 type Deploy struct {
-	Keys       KeyManager
+	Store      Store
 	Process    ProcessManager
 	Downloader Downloader
 	Checker    HealthChecker
 	ConfigPath string
+	log        func(...any)
 }
 
-// Run executes the main deployment loop.
+// SetLog injects a logger (called by tinywasm/app after registration with TUI).
+func (d *Deploy) SetLog(f func(...any)) { d.log = f }
+
+func (d *Deploy) logger(msgs ...any) {
+	if d.log != nil {
+		d.log(msgs...)
+	}
+}
+
+// IsConfigured returns true if a deploy method has been stored.
+func (d *Deploy) IsConfigured() bool {
+	method, err := d.Store.Get("DEPLOY_METHOD")
+	return err == nil && method != ""
+}
+
+// Run executes the deployment based on the stored DEPLOY_METHOD.
+// Called from cmd/deploy/main.go for standalone daemon mode.
 func (d *Deploy) Run() error {
-	// 1. Attempt to load config
-	cfg, err := Load(d.ConfigPath)
-	if err != nil && !os.IsNotExist(err) {
-		// Log warning but proceed if config file is corrupted? No, fail.
-		// If file doesn't exist, we might create it later.
-		// But if err is other than NotExist, return error.
-		return fmt.Errorf("failed to load config: %w", err)
+	method, err := d.Store.Get("DEPLOY_METHOD")
+	if err != nil || method == "" {
+		return fmt.Errorf("deploy: not configured — run wizard first (DEPLOY_METHOD not set)")
 	}
 
-	// 2. Check if configured (Keys exist)
-	// We check for GitHub PAT and HMAC Secret.
-	_, patErr := d.Keys.Get("github", "pat")
-	_, hmacErr := d.Keys.Get("deploy", "hmac_secret")
-
-	if patErr != nil || hmacErr != nil {
-		// Run Wizard
-		wizard := NewWizard(d.Keys)
-		if err := wizard.Run(); err != nil {
-			return fmt.Errorf("wizard failed: %w", err)
-		}
-
-		// If config was missing, ensure default is created now
-		if cfg == nil {
-			if err := CreateDefaultConfig(d.ConfigPath); err != nil {
-				return fmt.Errorf("failed to create default config: %w", err)
-			}
-			// Load again
-			cfg, err = Load(d.ConfigPath)
-			if err != nil {
-				return fmt.Errorf("failed to reload config: %w", err)
-			}
-		}
-	} else if cfg == nil {
-		// Keys exist but config missing? Create default.
+	cfg, err := Load(d.ConfigPath)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("deploy: load config: %w", err)
+	}
+	if cfg == nil {
 		if err := CreateDefaultConfig(d.ConfigPath); err != nil {
-			return fmt.Errorf("failed to create default config: %w", err)
+			return fmt.Errorf("deploy: create default config: %w", err)
 		}
 		cfg, err = Load(d.ConfigPath)
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("deploy: reload config: %w", err)
 		}
 	}
 
-	// 3. Start Server
-	hmacSecret, err := d.Keys.Get("deploy", "hmac_secret")
-	if err != nil {
-		return fmt.Errorf("failed to retrieve HMAC secret: %w", err)
+	switch method {
+	case "cloudflare":
+		return d.runCloudflare()
+	case "webhook":
+		return d.runWebhook(cfg)
+	case "ssh":
+		return d.runSSH(cfg)
+	default:
+		return fmt.Errorf("deploy: unknown method %q", method)
+	}
+}
+
+func (d *Deploy) runCloudflare() error {
+	cf := NewCFClient(d.Store)
+	cf.SetLog(d.logger)
+	// Output dir from store or default
+	return cf.Deploy("deploy/cloudflare", "_worker.js", "worker.wasm")
+}
+
+func (d *Deploy) runWebhook(cfg *Config) error {
+	hmacSecret, err := d.Store.Get("DEPLOY_HMAC_SECRET")
+	if err != nil || hmacSecret == "" {
+		return fmt.Errorf("deploy: HMAC secret not configured")
 	}
 
 	handler := &Handler{
@@ -87,19 +96,29 @@ func (d *Deploy) Run() error {
 		Downloader: d.Downloader,
 		Process:    d.Process,
 		Checker:    d.Checker,
-		Keys:       d.Keys,
+		Keys:       d.Store,
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/update", handler.HandleUpdate)
-	// Health check for deploy agent itself?
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
 
 	addr := fmt.Sprintf(":%d", cfg.Updater.Port)
-	fmt.Printf("Starting deploy agent on %s\n", addr)
+	d.logger("Starting deploy agent on", addr)
 	return http.ListenAndServe(addr, mux)
 }
 
+func (d *Deploy) runSSH(cfg *Config) error {
+	pat, err := d.Store.Get("DEPLOY_GITHUB_PAT")
+	if err != nil || pat == "" {
+		return fmt.Errorf("deploy: GitHub PAT not configured")
+	}
+	for _, app := range cfg.Apps {
+		script := SSHScript(app, "", pat)
+		d.logger("# SSH script for", app.Name+":\n"+script)
+	}
+	return nil
+}

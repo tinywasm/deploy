@@ -1,281 +1,328 @@
 package deploy
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/tinywasm/context"
+	"github.com/tinywasm/wizard"
 )
 
-type Wizard struct {
-	Keys   KeyManager
-	Stdin  io.Reader
-	Stdout io.Writer
+const (
+	ctxMethod     = "DEPLOY_METHOD"
+	ctxServerHost = "DEPLOY_SERVER_HOST"
+	ctxHMAC       = "DEPLOY_HMAC_SECRET"
+	ctxPAT        = "DEPLOY_GITHUB_PAT"
+	ctxSSHUser    = "DEPLOY_SSH_USER"
+	ctxSSHKey     = "DEPLOY_SSH_KEY"
+	ctxCFAccount  = "CF_ACCOUNT_ID"
+	ctxCFToken    = "CF_BOOTSTRAP_TOKEN"
+	ctxCFProject  = "CF_PROJECT"
+)
+
+// deployWizard holds a Store reference so wizard steps can persist answers.
+type deployWizard struct {
+	store   Store
+	cfSteps []*wizard.Step // dynamic steps injected based on chosen method
+	log     func(...any)
 }
 
-func NewWizard(keys KeyManager) *Wizard {
-	return &Wizard{
-		Keys:   keys,
-		Stdin:  os.Stdin,
-		Stdout: os.Stdout,
+// GetSteps implements the interface expected by tinywasm/wizard.New().
+// Returns the initial steps; method-specific steps are injected dynamically
+// via the Step 1 OnInputFn after the user chooses a deploy method.
+func (d *Deploy) GetSteps() []*wizard.Step {
+	dw := &deployWizard{
+		store: d.Store,
+		log:   d.log,
 	}
+	return dw.buildSteps()
 }
 
-// Run checks for configuration and launches the wizard if needed.
-func (w *Wizard) Run() error {
-	// check if configured
-	_, patErr := w.Keys.Get("github", "pat")
-	_, hmacErr := w.Keys.Get("deploy", "hmac_secret")
+func (dw *deployWizard) buildSteps() []*wizard.Step {
+	// Step 1: choose method — injects remaining steps into ctx via side-effect.
+	// tinywasm/wizard reads steps once at New() time, so we use a shared slice
+	// that Step 1 populates and subsequent steps read from.
+	dynamic := &dynamicSteps{}
 
-	if patErr == nil && hmacErr == nil {
-		// Already configured
-		return nil
-	}
-
-	return w.MainLoop()
-}
-
-func (w *Wizard) MainLoop() error {
-	scanner := bufio.NewScanner(w.Stdin)
-
-	for {
-		w.clearScreen()
-		fmt.Fprintln(w.Stdout, "DEPLOY - First Time Setup")
-		fmt.Fprintln(w.Stdout, "-----------------------")
-		fmt.Fprintln(w.Stdout, "1. Auto Setup (Guided)")
-		fmt.Fprintln(w.Stdout, "2. Manual Setup (Edit config.yaml)")
-		fmt.Fprintln(w.Stdout, "3. Help")
-		fmt.Fprintln(w.Stdout, "0. Exit")
-		fmt.Fprint(w.Stdout, "\nSelect option: ")
-
-		if !scanner.Scan() {
-			return scanner.Err()
-		}
-		choice := strings.TrimSpace(scanner.Text())
-
-		switch choice {
-		case "1":
-			if err := w.runAutoSetup(scanner); err != nil {
-				fmt.Fprintf(w.Stdout, "Error: %v\nPress Enter to continue...", err)
-				scanner.Scan()
-			} else {
-				return nil // Setup complete
+	step1 := &wizard.Step{
+		LabelText: "Deploy method: cloudflare | webhook | ssh",
+		OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+			method := strings.ToLower(strings.TrimSpace(input))
+			switch method {
+			case "cloudflare", "webhook", "ssh":
+			default:
+				return false, fmt.Errorf("invalid method — choose: cloudflare, webhook, or ssh")
 			}
-		case "2":
-			fmt.Fprintln(w.Stdout, "\nManual Setup: Please create config.yaml and use 'deploy --admin' to manage secrets.")
-			return nil
-		case "3":
-			w.showHelp()
-			fmt.Fprint(w.Stdout, "\nPress Enter to continue...")
-			scanner.Scan()
-		case "0":
-			return fmt.Errorf("setup cancelled")
-		default:
-			fmt.Fprintln(w.Stdout, "Invalid option")
+			ctx.Set(ctxMethod, method)
+			if err := dw.store.Set("DEPLOY_METHOD", method); err != nil {
+				return false, fmt.Errorf("store method: %w", err)
+			}
+			dynamic.steps = dw.stepsForMethod(method, ctx)
+			return true, nil
+		},
+	}
+
+	// Proxy steps delegate to dynamic.steps[i] once populated
+	proxy := make([]*wizard.Step, 5)
+	for i := range proxy {
+		idx := i // capture
+		proxy[idx] = &wizard.Step{
+			LabelText: "",
+			DefaultFn: func(ctx *context.Context) string {
+				if idx >= len(dynamic.steps) {
+					return ""
+				}
+				return dynamic.steps[idx].DefaultValue(ctx)
+			},
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if idx >= len(dynamic.steps) {
+					// No more steps for this method — skip gracefully
+					return true, nil
+				}
+				return dynamic.steps[idx].OnInput(input, ctx)
+			},
 		}
 	}
+
+	// Combine: step1 + up to 5 proxy steps
+	all := make([]*wizard.Step, 0, 6)
+	all = append(all, step1)
+	all = append(all, proxy...)
+	return all
 }
 
-func (w *Wizard) runAutoSetup(scanner *bufio.Scanner) error {
-	// Step 1: HMAC Secret
-	var hmacSecret string
-	for {
-		fmt.Fprint(w.Stdout, "\n[Step 1/3] Enter HMAC Secret (min 32 chars): ")
-		if !scanner.Scan() {
-			return scanner.Err()
-		}
-		hmacSecret = strings.TrimSpace(scanner.Text())
-		if len(hmacSecret) < 32 {
-			fmt.Fprintln(w.Stdout, "Error: Secret too short (min 32 chars).")
-			continue
-		}
-		break
+// dynamicSteps holds method-specific steps, populated after Step 1 completes.
+type dynamicSteps struct {
+	steps []*wizard.Step
+}
+
+func (dw *deployWizard) stepsForMethod(method string, ctx *context.Context) []*wizard.Step {
+	switch method {
+	case "cloudflare":
+		return dw.cloudfareSteps()
+	case "webhook":
+		return dw.webhookSteps()
+	case "ssh":
+		return dw.sshSteps()
 	}
-
-	// Step 2: GitHub PAT
-	var githubPat string
-	for {
-		fmt.Fprint(w.Stdout, "\n[Step 2/3] Enter GitHub PAT (ghp_...): ")
-		if !scanner.Scan() {
-			return scanner.Err()
-		}
-		githubPat = strings.TrimSpace(scanner.Text())
-		if githubPat == "" {
-			fmt.Fprintln(w.Stdout, "Error: PAT cannot be empty.")
-			continue
-		}
-		// Basic format check
-		if !strings.HasPrefix(githubPat, "ghp_") && !strings.HasPrefix(githubPat, "github_pat_") {
-			fmt.Fprint(w.Stdout, "Warning: Token format looks unusual. Continue? (y/N): ")
-			if !scanner.Scan() {
-				return scanner.Err()
-			}
-			if strings.ToLower(strings.TrimSpace(scanner.Text())) != "y" {
-				continue
-			}
-		}
-		break
-	}
-
-	// Save Secrets
-	if err := w.Keys.Set("deploy", "hmac_secret", hmacSecret); err != nil {
-		return fmt.Errorf("failed to save HMAC secret: %w", err)
-	}
-	if err := w.Keys.Set("github", "pat", githubPat); err != nil {
-		return fmt.Errorf("failed to save GitHub PAT: %w", err)
-	}
-
-	fmt.Fprintln(w.Stdout, "\n[Success] Secrets stored in Keyring.")
-
-	// Step 3: Config
-	fmt.Fprintln(w.Stdout, "\n[Step 3/3] Configuration")
-	// For now, just create default if missing
-	// We assume config path is relative to executable or current dir.
-	// We can't easily guess it here without passing it.
-	// For simplicity, we'll suggest creating default config in CWD or let Deploy.Run handle it.
-	// But Deploy.Run calls Wizard if keys are missing.
-
 	return nil
 }
 
-func (w *Wizard) showHelp() {
-	fmt.Fprintln(w.Stdout, "\nHelp:")
-	fmt.Fprintln(w.Stdout, "- Auto Setup: Guides you through entering secrets.")
-	fmt.Fprintln(w.Stdout, "- Manual Setup: Configure everything manually.")
-	fmt.Fprintln(w.Stdout, "- Secrets are stored in Windows Credential Manager.")
-}
+func (dw *deployWizard) cloudfareSteps() []*wizard.Step {
+	cf := NewCFClient(dw.store)
+	cf.SetLog(dw.log)
 
-func (w *Wizard) clearScreen() {
-	// Simple ANSI clear screen, might not work on all Windows terminals but fine for now
-	// fmt.Fprint(w.Stdout, "\033[H\033[2J")
-	// Or just newlines
-	fmt.Fprint(w.Stdout, "\n\n\n")
-}
-
-// RunAdmin launches the admin menu.
-func (w *Wizard) RunAdmin() error {
-	scanner := bufio.NewScanner(w.Stdin)
-
-	for {
-		w.clearScreen()
-		fmt.Fprintln(w.Stdout, "DEPLOY - Admin Menu")
-		fmt.Fprintln(w.Stdout, "-------------------")
-		fmt.Fprintln(w.Stdout, "1. View Secrets (Masked)")
-		fmt.Fprintln(w.Stdout, "2. Rotate HMAC Secret")
-		fmt.Fprintln(w.Stdout, "3. Rotate GitHub PAT")
-		fmt.Fprintln(w.Stdout, "4. Delete All Secrets")
-		fmt.Fprintln(w.Stdout, "0. Exit")
-		fmt.Fprint(w.Stdout, "\nSelect option: ")
-
-		if !scanner.Scan() {
-			return scanner.Err()
-		}
-		choice := strings.TrimSpace(scanner.Text())
-
-		switch choice {
-		case "1":
-			w.viewSecrets()
-			fmt.Fprint(w.Stdout, "\nPress Enter to continue...")
-			scanner.Scan()
-		case "2":
-			// Rotate HMAC
-			fmt.Fprint(w.Stdout, "Enter new HMAC Secret: ")
-			scanner.Scan()
-			newSecret := strings.TrimSpace(scanner.Text())
-			if len(newSecret) >= 32 {
-				if err := w.Keys.Set("deploy", "hmac_secret", newSecret); err != nil {
-					fmt.Fprintf(w.Stdout, "Error: %v\n", err)
-				} else {
-					fmt.Fprintln(w.Stdout, "Secret updated.")
+	return []*wizard.Step{
+		{
+			LabelText: "Cloudflare Account ID (dashboard.cloudflare.com → right sidebar)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if input == "" {
+					return false, fmt.Errorf("account ID cannot be empty")
 				}
-			} else {
-				fmt.Fprintln(w.Stdout, "Error: Secret too short.")
-			}
-			fmt.Fprint(w.Stdout, "\nPress Enter to continue...")
-			scanner.Scan()
-		case "3":
-			// Rotate PAT
-			fmt.Fprint(w.Stdout, "Enter new GitHub PAT: ")
-			scanner.Scan()
-			newPat := strings.TrimSpace(scanner.Text())
-			if newPat != "" {
-				if err := w.Keys.Set("github", "pat", newPat); err != nil {
-					fmt.Fprintf(w.Stdout, "Error: %v\n", err)
-				} else {
-					fmt.Fprintln(w.Stdout, "PAT updated.")
+				ctx.Set(ctxCFAccount, input)
+				return true, nil
+			},
+		},
+		{
+			LabelText: "Bootstrap API Token (Cloudflare dashboard → My Profile → API Tokens → Edit user API tokens)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if len(input) < 20 {
+					return false, fmt.Errorf("token looks too short")
 				}
-			} else {
-				fmt.Fprintln(w.Stdout, "Error: Cannot be empty.")
-			}
-			fmt.Fprint(w.Stdout, "\nPress Enter to continue...")
-			scanner.Scan()
-		case "4":
-			fmt.Fprint(w.Stdout, "Are you sure? (y/N): ")
-			scanner.Scan()
-			if strings.ToLower(strings.TrimSpace(scanner.Text())) == "y" {
-				// Delete keys (requires method in KeyManager or just overwrite?)
-				// KeyManager interface doesn't have Delete.
-				// We can set to empty string or maybe fail.
-				// For now, we'll just say "Not implemented in interface".
-				// Or we should add Delete to interface?
-				// Interface is defined in deploy.go: Get, Set.
-				// We should add Delete or clear logic.
-				// Since implementation uses zalando/go-keyring, it has Delete.
-				// I'll update interface later if needed, for now just warn.
-				fmt.Fprintln(w.Stdout, "Delete not fully supported in interface, overwriting with empty.")
-				w.Keys.Set("deploy", "hmac_secret", "")
-				w.Keys.Set("github", "pat", "")
-			}
-		case "0":
-			return nil
-		default:
-			fmt.Fprintln(w.Stdout, "Invalid option")
-		}
+				ctx.Set(ctxCFToken, input)
+				return true, nil
+			},
+		},
+		{
+			LabelText: "Cloudflare Pages project name (create it first at pages.cloudflare.com)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if input == "" {
+					return false, fmt.Errorf("project name cannot be empty")
+				}
+				accountID := ctx.Value(ctxCFAccount)
+				bootstrapToken := ctx.Value(ctxCFToken)
+				if err := cf.Setup(accountID, bootstrapToken, input); err != nil {
+					return false, fmt.Errorf("Cloudflare setup failed: %w", err)
+				}
+				return true, nil
+			},
+		},
 	}
 }
 
-func (w *Wizard) viewSecrets() {
-	pat, err := w.Keys.Get("github", "pat")
-	if err != nil {
-		pat = "(not set)"
-	} else {
-		if len(pat) > 4 {
-			pat = pat[:4] + "..." + pat[len(pat)-4:]
-		} else {
-			pat = "***"
-		}
+func (dw *deployWizard) webhookSteps() []*wizard.Step {
+	return []*wizard.Step{
+		{
+			LabelText: "Server host:port for webhook daemon (e.g. myserver.com:9000)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if input == "" {
+					return false, fmt.Errorf("host cannot be empty")
+				}
+				ctx.Set(ctxServerHost, input)
+				return true, dw.store.Set("DEPLOY_SERVER_HOST", input)
+			},
+		},
+		{
+			LabelText: "HMAC Secret (min 32 chars, used to validate webhook from GitHub)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if len(input) < 32 {
+					return false, fmt.Errorf("secret must be at least 32 characters")
+				}
+				ctx.Set(ctxHMAC, input)
+				return true, dw.store.Set("DEPLOY_HMAC_SECRET", input)
+			},
+		},
+		{
+			LabelText: "GitHub PAT (ghp_... or github_pat_... — needs repo read access)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if input == "" {
+					return false, fmt.Errorf("PAT cannot be empty")
+				}
+				ctx.Set(ctxPAT, input)
+				if err := dw.store.Set("DEPLOY_GITHUB_PAT", input); err != nil {
+					return false, err
+				}
+				return true, dw.generateWebhookFiles(ctx)
+			},
+		},
 	}
-
-	hmacSec, err := w.Keys.Get("deploy", "hmac_secret")
-	if err != nil {
-		hmacSec = "(not set)"
-	} else {
-		hmacSec = "***" // Always hide fully or show hash?
-	}
-
-	fmt.Fprintf(w.Stdout, "GitHub PAT: %s\n", pat)
-	fmt.Fprintf(w.Stdout, "HMAC Secret: %s\n", hmacSec)
 }
 
-// CreateDefaultConfig creates a default config file at the given path.
-func CreateDefaultConfig(path string) error {
+func (dw *deployWizard) sshSteps() []*wizard.Step {
+	return []*wizard.Step{
+		{
+			LabelText: "Server host (e.g. myserver.com)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if input == "" {
+					return false, fmt.Errorf("host cannot be empty")
+				}
+				ctx.Set(ctxServerHost, input)
+				return true, dw.store.Set("DEPLOY_SERVER_HOST", input)
+			},
+		},
+		{
+			LabelText: "SSH username (e.g. deploy)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if input == "" {
+					return false, fmt.Errorf("SSH user cannot be empty")
+				}
+				ctx.Set(ctxSSHUser, input)
+				return true, dw.store.Set("DEPLOY_SSH_USER", input)
+			},
+		},
+		{
+			LabelText: "SSH private key path (e.g. ~/.ssh/id_ed25519)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if input == "" {
+					return false, fmt.Errorf("SSH key path cannot be empty")
+				}
+				ctx.Set(ctxSSHKey, input)
+				return true, dw.store.Set("DEPLOY_SSH_KEY", input)
+			},
+		},
+		{
+			LabelText: "GitHub PAT (ghp_... or github_pat_... — needs repo read access)",
+			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
+				if input == "" {
+					return false, fmt.Errorf("PAT cannot be empty")
+				}
+				ctx.Set(ctxPAT, input)
+				if err := dw.store.Set("DEPLOY_GITHUB_PAT", input); err != nil {
+					return false, err
+				}
+				return true, dw.generateSSHFiles(ctx)
+			},
+		},
+	}
+}
+
+// ── file generation ───────────────────────────────────────────────────────────
+
+func (dw *deployWizard) generateWebhookFiles(ctx *context.Context) error {
+	host := ctx.Value(ctxServerHost)
+	if err := writeGHAWorkflow("webhook", host, ""); err != nil {
+		return err
+	}
+	return CreateDefaultConfig("deploy.yaml")
+}
+
+func (dw *deployWizard) generateSSHFiles(ctx *context.Context) error {
+	host := ctx.Value(ctxServerHost)
+	user := ctx.Value(ctxSSHUser)
+	key := ctx.Value(ctxSSHKey)
+	return writeGHAWorkflow("ssh", host, fmt.Sprintf("user=%s key=%s", user, key))
+}
+
+func writeGHAWorkflow(method, host, extra string) error {
+	dir := ".github/workflows"
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("create workflows dir: %w", err)
+	}
+	path := filepath.Join(dir, "deploy.yml")
 	if _, err := os.Stat(path); err == nil {
 		return nil // already exists
 	}
 
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
+	var content string
+	switch method {
+	case "webhook":
+		content = fmt.Sprintf(`name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger deploy webhook
+        run: |
+          PAYLOAD=$(cat release.json)
+          SIG=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.DEPLOY_HMAC_SECRET }}" | awk '{print "sha256="$2}')
+          curl -X POST http://%s/update \
+            -H "X-Signature: $SIG" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
+`, host)
+	case "ssh":
+		content = fmt.Sprintf(`name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy via SSH
+        run: |
+          # SSH deploy to %s
+          # Configure SSH key in GitHub secrets as DEPLOY_SSH_KEY
+          echo "Deploy via SSH — configure your SSH steps here"
+# extra: %s
+`, host, extra)
 	}
 
-	defaultConfig := `updater:
+	return os.WriteFile(path, []byte(content), 0644)
+}
+
+// CreateDefaultConfig creates a default deploy.yaml if it does not exist.
+func CreateDefaultConfig(path string) error {
+	if _, err := os.Stat(path); err == nil {
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(`updater:
   port: 8080
   log_level: info
   temp_dir: ./temp
 
 apps: []
-`
-	return os.WriteFile(path, []byte(defaultConfig), 0644)
+`), 0644)
 }

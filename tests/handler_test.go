@@ -46,8 +46,8 @@ func TestHandleUpdate_Success(t *testing.T) {
 	downloader := NewMockDownloader()
 	procManager := NewMockProcessManager()
 	checker := NewMockHealthChecker()
-	keys := NewMockKeyManager()
-	keys.Set("github", "pat", "token")
+	keys := NewMockStore()
+	keys.Set("DEPLOY_GITHUB_PAT", "token")
 
 	handler := &deploy.Handler{
 		Config:     config,
@@ -122,8 +122,8 @@ func TestHandleUpdate_Busy(t *testing.T) {
 	checker.Responses = map[string]*deploy.HealthStatus{
 		"http://localhost/health": {Status: "busy", CanRestart: false},
 	}
-	keys := NewMockKeyManager()
-	keys.Set("github", "pat", "token")
+	keys := NewMockStore()
+	keys.Set("DEPLOY_GITHUB_PAT", "token")
 
 	handler := &deploy.Handler{
 		Config:     config,

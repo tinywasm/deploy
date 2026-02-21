@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,35 +9,35 @@ import (
 	"github.com/tinywasm/deploy"
 )
 
-func main() {
-	admin := flag.Bool("admin", false, "Run admin menu")
-	flag.Parse()
+// envStore reads deploy config from environment variables.
+// Used by the standalone daemon where kvdb is not available.
+type envStore struct{}
 
-	// Initialize dependencies
-	keys := deploy.NewSystemKeyManager()
-
-	if *admin {
-		wizard := deploy.NewWizard(keys)
-		if err := wizard.RunAdmin(); err != nil {
-			log.Fatalf("admin menu failed: %v", err)
-		}
-		return
+func (e *envStore) Get(key string) (string, error) {
+	val := os.Getenv(key)
+	if val == "" {
+		return "", fmt.Errorf("%s not set", key)
 	}
+	return val, nil
+}
 
+func (e *envStore) Set(key, value string) error {
+	return os.Setenv(key, value)
+}
+
+func main() {
 	process := deploy.NewProcessManager()
 	downloader := deploy.NewDownloader()
 	checker := deploy.NewChecker()
 
-	// Determine config path
 	exePath, err := os.Executable()
 	if err != nil {
 		log.Fatalf("failed to determine executable path: %v", err)
 	}
-	exeDir := filepath.Dir(exePath)
-	configPath := filepath.Join(exeDir, "config.yaml")
+	configPath := filepath.Join(filepath.Dir(exePath), "config.yaml")
 
 	d := &deploy.Deploy{
-		Keys:       keys,
+		Store:      &envStore{},
 		Process:    process,
 		Downloader: downloader,
 		Checker:    checker,

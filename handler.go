@@ -26,7 +26,7 @@ type Handler struct {
 	Downloader Downloader
 	Process    ProcessManager
 	Checker    HealthChecker // Use interface
-	Keys       KeyManager
+	Keys       Store
 }
 
 func (h *Handler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +100,7 @@ WaitLoop:
 	}
 
 	// 5. Download New Version
-	token, err := h.Keys.Get("github", "pat")
+	token, err := h.Keys.Get("DEPLOY_GITHUB_PAT")
 	if err != nil {
 		http.Error(w, "Missing GitHub token", http.StatusInternalServerError)
 		return

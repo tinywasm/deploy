@@ -19,6 +19,6 @@ flowchart TD
     Wizard --> InputConfig[Ask for Server IP/Port]
     InputConfig --> InputSecrets[Ask for GitHub Token/HMAC Secret]
     InputSecrets --> GenAction[Generate .github/workflows/deploy.yml]
-    GenAction --> GenConfig[Generate config.yaml (for server)]
+    GenAction --> GenConfig["Generate config.yaml (for server)"]
     GenConfig --> EndWizard([End Setup])
 ```

@@ -55,8 +55,8 @@ func TestHandleUpdate_Rollback_CreatesFailedArtifact(t *testing.T) {
 		},
 	}
 
-	keys := NewMockKeyManager()
-	keys.Set("github", "pat", "token")
+	keys := NewMockStore()
+	keys.Set("DEPLOY_GITHUB_PAT", "token")
 
 	handler := &deploy.Handler{
 		Config:     config,
@@ -137,8 +137,8 @@ apps:
 	downloader := NewMockDownloader()
 	procManager := NewMockProcessManager()
 	checker := NewMockHealthChecker() // Default is healthy
-	keys := NewMockKeyManager()
-	keys.Set("github", "pat", "token")
+	keys := NewMockStore()
+	keys.Set("DEPLOY_GITHUB_PAT", "token")
 
 	handler := &deploy.Handler{
 		Config:     config,

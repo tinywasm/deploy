@@ -66,34 +66,30 @@ func (m *MockDownloader) Download(url, dest, token string) error {
 	return os.WriteFile(dest, []byte("mock downloaded content"), 0644)
 }
 
-// MockKeyManager records calls to Get and Set.
-type MockKeyManager struct {
-	mu      sync.Mutex
-	Secrets map[string]string
+// MockStore is a flat in-memory Store implementation for tests.
+type MockStore struct {
+	mu   sync.Mutex
+	Data map[string]string
 }
 
-func NewMockKeyManager() *MockKeyManager {
-	return &MockKeyManager{
-		Secrets: make(map[string]string),
-	}
+func NewMockStore() *MockStore {
+	return &MockStore{Data: make(map[string]string)}
 }
 
-func (m *MockKeyManager) Get(service, user string) (string, error) {
+func (m *MockStore) Get(key string) (string, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	key := fmt.Sprintf("%s:%s", service, user)
-	val, ok := m.Secrets[key]
+	val, ok := m.Data[key]
 	if !ok {
-		return "", fmt.Errorf("secret not found")
+		return "", fmt.Errorf("key not found: %s", key)
 	}
 	return val, nil
 }
 
-func (m *MockKeyManager) Set(service, user, password string) error {
+func (m *MockStore) Set(key, value string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	key := fmt.Sprintf("%s:%s", service, user)
-	m.Secrets[key] = password
+	m.Data[key] = value
 	return nil
 }
 
