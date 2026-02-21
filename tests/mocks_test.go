@@ -1,144 +1,137 @@
-// Package tests contains unit and integration tests for tinywasm/deploy.
-// All external dependencies are mocked — no real processes, network calls, or keyring access.
-package tests
+package deploy_test
 
 import (
-	"errors"
-	"net/http"
-	"strings"
-	"time"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sync"
 
 	"github.com/tinywasm/deploy"
 )
 
-// mockKeyManager simulates tinywasm/keyring without touching the OS keyring.
-type mockKeyManager struct {
-	hmacSecret string
-	pat        string
-	configured bool
+// MockProcessManager records calls to Start and Stop.
+type MockProcessManager struct {
+	mu      sync.Mutex
+	Started []string
+	Stopped []string
 }
 
-func (m *mockKeyManager) GetHMACSecret() (string, error) {
-	if m.hmacSecret == "" {
-		return "", errors.New("hmac secret not set")
+func NewMockProcessManager() *MockProcessManager {
+	return &MockProcessManager{
+		Started: make([]string, 0),
+		Stopped: make([]string, 0),
 	}
-	return m.hmacSecret, nil
 }
 
-func (m *mockKeyManager) GetGitHubPAT() (string, error) {
-	if m.pat == "" {
-		return "", errors.New("PAT not set")
-	}
-	return m.pat, nil
-}
-
-func (m *mockKeyManager) IsConfigured() bool { return m.configured }
-
-// mockProcessManager records Start/Stop calls without executing OS commands.
-type mockProcessManager struct {
-	started []string
-	stopped []string
-	startErr error
-	stopErr  error
-}
-
-func (m *mockProcessManager) Stop(service string) error {
-	m.stopped = append(m.stopped, service)
-	return m.stopErr
-}
-
-func (m *mockProcessManager) Start(exePath string) error {
-	m.started = append(m.started, exePath)
-	return m.startErr
-}
-
-// mockDownloader simulates binary downloads without network.
-type mockDownloader struct {
-	err error
-}
-
-func (m *mockDownloader) Download(url, dest, token string) error {
-	return m.err
-}
-
-// mockChecker simulates health checks without network.
-type mockChecker struct {
-	responses []error // popped in order; last is repeated if exhausted
-}
-
-func (m *mockChecker) Check(url string, maxRetries int, interval time.Duration) error {
-	if len(m.responses) == 0 {
-		return nil
-	}
-	r := m.responses[0]
-	if len(m.responses) > 1 {
-		m.responses = m.responses[1:]
-	}
-	return r
-}
-
-// mockFileOps records rename/remove calls without touching the filesystem.
-type mockFileOps struct {
-	renames []string // "old->new"
-	removes []string
-	renameErr error
-}
-
-func (m *mockFileOps) Rename(oldPath, newPath string) error {
-	m.renames = append(m.renames, oldPath+"->"+newPath)
-	return m.renameErr
-}
-
-func (m *mockFileOps) Remove(path string) error {
-	m.removes = append(m.removes, path)
+func (m *MockProcessManager) Start(exePath string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Started = append(m.Started, exePath)
 	return nil
 }
 
-// testRoundTripper allows httptest-like responses for mockChecker used in handler tests.
-type roundTripFunc func(*http.Request) (*http.Response, error)
+func (m *MockProcessManager) Stop(exeName string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Stopped = append(m.Stopped, exeName)
+	return nil
+}
 
-func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+// MockDownloader records calls to Download and simulates file creation.
+type MockDownloader struct {
+	mu           sync.Mutex
+	Downloaded   []string // url -> dest
+	ShouldFail   bool
+	ShouldFailAs int // Status code
+}
 
-func newOKResponse() *http.Response {
-	return &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       http.NoBody,
+func NewMockDownloader() *MockDownloader {
+	return &MockDownloader{
+		Downloaded: make([]string, 0),
 	}
 }
 
-func newJSONResponse(body string) *http.Response {
-	return &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io_nopCloser(strings.NewReader(body)),
-		Header:     http.Header{"Content-Type": []string{"application/json"}},
+func (m *MockDownloader) Download(url, dest, token string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.ShouldFail {
+		return fmt.Errorf("mock download failed")
+	}
+	m.Downloaded = append(m.Downloaded, fmt.Sprintf("%s -> %s", url, dest))
+
+	// Create dummy file at dest
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		return err
+	}
+	return os.WriteFile(dest, []byte("mock downloaded content"), 0644)
+}
+
+// MockKeyManager records calls to Get and Set.
+type MockKeyManager struct {
+	mu      sync.Mutex
+	Secrets map[string]string
+}
+
+func NewMockKeyManager() *MockKeyManager {
+	return &MockKeyManager{
+		Secrets: make(map[string]string),
 	}
 }
 
-// io_nopCloser wraps a strings.Reader with a no-op Close.
-type nopCloser struct{ *strings.Reader }
-
-func (nopCloser) Close() error { return nil }
-
-func io_nopCloser(r *strings.Reader) *nopCloser { return &nopCloser{r} }
-
-// testConfig returns a minimal Config for tests.
-func testConfig() *deploy.Config {
-	return &deploy.Config{
-		Mode:    "webhook",
-		Port:    9000,
-		TempDir: "/tmp",
-		Apps: []deploy.AppConfig{
-			{
-				Name:        "myapp",
-				Service:     "myapp.service",
-				Executable:  "myapp",
-				Path:        "/srv/myapp",
-				HealthURL:   "http://localhost:8080/health",
-				Rollback:    true,
-				StartupWait: 0,
-				HealthRetry: 2,
-				Version:     "v1.0.0",
-			},
-		},
+func (m *MockKeyManager) Get(service, user string) (string, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	key := fmt.Sprintf("%s:%s", service, user)
+	val, ok := m.Secrets[key]
+	if !ok {
+		return "", fmt.Errorf("secret not found")
 	}
+	return val, nil
+}
+
+func (m *MockKeyManager) Set(service, user, password string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	key := fmt.Sprintf("%s:%s", service, user)
+	m.Secrets[key] = password
+	return nil
+}
+
+// MockHealthChecker records calls to Check.
+type MockHealthChecker struct {
+	mu             sync.Mutex
+	Responses      map[string]*deploy.HealthStatus
+	QueueResponses map[string][]*deploy.HealthStatus // Queue of responses
+	ShouldFail     bool
+}
+
+func NewMockHealthChecker() *MockHealthChecker {
+	return &MockHealthChecker{
+		Responses:      make(map[string]*deploy.HealthStatus),
+		QueueResponses: make(map[string][]*deploy.HealthStatus),
+	}
+}
+
+func (m *MockHealthChecker) Check(url string) (*deploy.HealthStatus, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.ShouldFail {
+		return nil, fmt.Errorf("mock health check failed")
+	}
+
+	// Check queue first
+	if queue, ok := m.QueueResponses[url]; ok && len(queue) > 0 {
+		status := queue[0]
+		m.QueueResponses[url] = queue[1:]
+		if status == nil {
+			return nil, fmt.Errorf("mock scheduled failure")
+		}
+		return status, nil
+	}
+
+	status, ok := m.Responses[url]
+	if !ok {
+		return &deploy.HealthStatus{Status: "ok", CanRestart: true}, nil
+	}
+	return status, nil
 }

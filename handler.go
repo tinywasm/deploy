@@ -2,170 +2,185 @@ package deploy
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
-	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
-// updatePayload is the JSON body sent by the GitHub Action webhook.
-type updatePayload struct {
-	App        string `json:"app"`         // matches AppConfig.Name
-	Version    string `json:"version"`     // new version tag
-	DownloadURL string `json:"download_url"` // direct asset download URL
+type UpdateRequest struct {
+	Repo        string `json:"repo"`
+	Tag         string `json:"tag"`
+	Executable  string `json:"executable"`
+	DownloadURL string `json:"download_url"`
 }
 
-// WebhookHandler is the HTTP handler for POST /update.
-type WebhookHandler struct {
-	cfg       *Config
-	hmac      *HMACValidator
-	keys      KeyManager
-	dl        Downloader
-	checker   HealthChecker
-	mgr       ProcessManager
-	files     FileOps
+type Handler struct {
+	Config     *Config
+	ConfigPath string
+	Validator  *HMACValidator
+	Downloader Downloader
+	Process    ProcessManager
+	Checker    HealthChecker // Use interface
+	Keys       KeyManager
 }
 
-// NewWebhookHandler creates a handler with all dependencies injected.
-func NewWebhookHandler(
-	cfg *Config,
-	hmac *HMACValidator,
-	keys KeyManager,
-	dl Downloader,
-	checker HealthChecker,
-	mgr ProcessManager,
-	files FileOps,
-) *WebhookHandler {
-	return &WebhookHandler{
-		cfg:     cfg,
-		hmac:    hmac,
-		keys:    keys,
-		dl:      dl,
-		checker: checker,
-		mgr:     mgr,
-		files:   files,
-	}
-}
-
-// ServeHTTP handles POST /update.
-func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 1. Validate Signature
+	signature := r.Header.Get("X-Signature")
+	if signature == "" {
+		http.Error(w, "Missing signature", http.StatusUnauthorized)
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "read body failed", http.StatusBadRequest)
+		http.Error(w, "Failed to read body", http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
 
-	// 1. Validate HMAC signature
-	sig := r.Header.Get("X-Signature")
-	if err := h.hmac.Validate(body, sig); err != nil {
-		log.Println("deploy: HMAC validation failed:", err)
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	if err := h.Validator.ValidateRequest(body, signature); err != nil {
+		http.Error(w, "Invalid signature", http.StatusUnauthorized)
 		return
 	}
 
-	// 2. Parse payload
-	var payload updatePayload
-	if err := json.Unmarshal(body, &payload); err != nil {
-		http.Error(w, "invalid payload", http.StatusBadRequest)
+	// 2. Parse Payload
+	var req UpdateRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
 
-	// 3. Find app config
-	app := h.findApp(payload.App)
+	// 3. Find App Config
+	var app *AppConfig
+	for i := range h.Config.Apps {
+		if h.Config.Apps[i].Executable == req.Executable {
+			app = &h.Config.Apps[i]
+			break
+		}
+	}
 	if app == nil {
-		http.Error(w, "app not registered", http.StatusNotFound)
+		http.Error(w, "App not configured", http.StatusNotFound)
 		return
 	}
 
-	// 4. Skip if already at this version
-	if app.Version == payload.Version {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("already up to date"))
-		return
-	}
+	// 4. Check Health (Busy Loop)
+	timeout := time.After(app.BusyTimeout)
+	ticker := time.NewTicker(app.BusyRetryInterval)
+	defer ticker.Stop()
 
-	// 5. Get GitHub PAT
-	pat, err := h.keys.GetGitHubPAT()
-	if err != nil {
-		log.Println("deploy: keyring error:", err)
-		http.Error(w, "keyring error", http.StatusInternalServerError)
-		return
-	}
+WaitLoop:
+	for {
+		status, err := h.Checker.Check(app.HealthEndpoint)
+		if err != nil {
+			// If check fails (e.g. network error), assume not busy?
+			break WaitLoop
+		}
+		if status.CanRestart {
+			break WaitLoop
+		}
 
-	// 6. Download new binary
-	newBin := filepath.Join(h.cfg.TempDir, payload.App+"-new")
-	if err := h.dl.Download(payload.DownloadURL, newBin, pat); err != nil {
-		log.Println("deploy: download failed:", err)
-		http.Error(w, "download failed", http.StatusInternalServerError)
-		return
-	}
-
-	// 7. Pre-flight health check (warn-only if app is down)
-	healthURL := app.HealthURL
-	if healthURL != "" {
-		interval := 2 * time.Second
-		if err := h.checker.Check(healthURL, app.HealthRetry, interval); err != nil {
-			log.Println("deploy: pre-flight health:", err)
-			// If app is BUSY (can_restart=false), reject
-			if err.Error() == "app busy: can_restart=false" {
-				http.Error(w, "service unavailable: app busy", http.StatusServiceUnavailable)
-				return
-			}
-			// App is DOWN — log and continue
-			log.Println("deploy: app was down before deploy, continuing")
+		select {
+		case <-timeout:
+			http.Error(w, "Service busy", http.StatusServiceUnavailable)
+			return
+		case <-ticker.C:
+			continue
 		}
 	}
 
-	// 8. Hot-swap
-	currentBin := filepath.Join(app.Path, app.Executable)
-	backupBin, err := HotSwap(h.files, currentBin, newBin)
+	// 5. Download New Version
+	token, err := h.Keys.Get("github", "pat")
 	if err != nil {
-		log.Println("deploy: hot-swap failed:", err)
-		http.Error(w, "hot-swap failed", http.StatusInternalServerError)
+		http.Error(w, "Missing GitHub token", http.StatusInternalServerError)
 		return
 	}
 
-	// 9. Stop old + start new
-	_ = h.mgr.Stop(app.Service)
-	time.Sleep(300 * time.Millisecond)
-	if err := h.mgr.Start(currentBin); err != nil {
-		log.Println("deploy: start failed:", err)
-		http.Error(w, "start failed", http.StatusInternalServerError)
+	tempFile := filepath.Join(h.Config.Updater.TempDir, req.Executable+".new")
+	if err := h.Downloader.Download(req.DownloadURL, tempFile, token); err != nil {
+		http.Error(w, fmt.Sprintf("Download failed: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// 10. Post-deploy health check with rollback on failure
-	time.Sleep(app.StartupWait)
-	if healthURL != "" {
-		if err := h.checker.Check(healthURL, app.HealthRetry, 2*time.Second); err != nil {
-			log.Println("deploy: post-deploy health check failed, rolling back:", err)
-			if rbErr := Rollback(h.files, currentBin, backupBin, h.mgr, app.Service); rbErr != nil {
-				log.Println("deploy: rollback also failed:", rbErr)
-			}
-			http.Error(w, "deploy failed: rollback executed", http.StatusInternalServerError)
+	// 6. Stop Existing Process
+	_ = h.Process.Stop(app.Executable)
+
+	// 7. Backup Existing Binary
+	appPath := filepath.Join(app.Path, app.Executable)
+	backupPath := filepath.Join(app.Path, app.Executable+".old")
+
+	if _, err := os.Stat(appPath); err == nil {
+		if err := os.Rename(appPath, backupPath); err != nil {
+			http.Error(w, fmt.Sprintf("Failed to backup: %v", err), http.StatusInternalServerError)
 			return
 		}
 	}
 
-	// 11. Update version in config
-	app.Version = payload.Version
-	log.Printf("deploy: %s updated to %s\n", payload.App, payload.Version)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("deployed " + payload.Version))
-}
+	// 8. Move New Binary
+	if err := os.Rename(tempFile, appPath); err != nil {
+		// Try to restore backup
+		_ = os.Rename(backupPath, appPath)
+		// Restart old process if move failed
+		_ = h.Process.Start(appPath)
+		http.Error(w, fmt.Sprintf("Failed to install: %v", err), http.StatusInternalServerError)
+		return
+	}
 
-func (h *WebhookHandler) findApp(name string) *AppConfig {
-	for i := range h.cfg.Apps {
-		if h.cfg.Apps[i].Name == name {
-			return &h.cfg.Apps[i]
+	// 9. Start New Process
+	if err := h.Process.Start(appPath); err != nil {
+		// Rollback
+		// Rename failed binary to app-failed.exe
+		failedPath := filepath.Join(app.Path, "app-failed.exe")
+		_ = os.Remove(failedPath) // Ensure target doesn't exist (Windows)
+		_ = os.Rename(appPath, failedPath)
+
+		_ = os.Rename(backupPath, appPath)
+		_ = h.Process.Start(appPath) // Try to restart old version
+		http.Error(w, fmt.Sprintf("Failed to start: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// 10. Health Check New Process
+	if app.StartupDelay > 0 {
+		time.Sleep(app.StartupDelay)
+	}
+
+	newStatus, err := h.Checker.Check(app.HealthEndpoint)
+	if err != nil || newStatus.Status != "ok" { // Assuming "ok" is success criteria
+		// Rollback
+		_ = h.Process.Stop(app.Executable)
+
+		// Rename failed binary to app-failed.exe
+		failedPath := filepath.Join(app.Path, "app-failed.exe")
+		_ = os.Remove(failedPath) // Ensure target doesn't exist
+		_ = os.Rename(appPath, failedPath)
+
+		_ = os.Rename(backupPath, appPath)
+		_ = h.Process.Start(appPath)
+		http.Error(w, "New version failed health check", http.StatusInternalServerError)
+		return
+	}
+
+	// 11. Update Config (Version)
+	if req.Tag != "" {
+		app.Version = req.Tag
+		if h.ConfigPath != "" {
+			if data, err := yaml.Marshal(h.Config); err == nil {
+				_ = os.WriteFile(h.ConfigPath, data, 0644)
+			}
 		}
 	}
-	return nil
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Update successful"))
 }

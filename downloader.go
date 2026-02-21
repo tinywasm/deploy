@@ -9,57 +9,52 @@ import (
 	"time"
 )
 
-// Downloader fetches a release binary from a URL.
 type Downloader interface {
-	// Download saves the content at url to destPath, authenticating with token.
-	Download(url, destPath, token string) error
+	Download(url, dest, token string) error
 }
 
-// HTTPDownloader is the production Downloader using net/http.
 type HTTPDownloader struct {
 	client *http.Client
 }
 
-// NewDownloader creates an HTTPDownloader with a generous timeout for large binaries.
 func NewDownloader() *HTTPDownloader {
 	return &HTTPDownloader{client: &http.Client{Timeout: 10 * time.Minute}}
 }
 
-// Download fetches url with Bearer <token> and writes to destPath.
-func (d *HTTPDownloader) Download(url, destPath, token string) error {
-	if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
-		return fmt.Errorf("download mkdir: %w", err)
+func (d *HTTPDownloader) Download(url, dest, token string) error {
+	// ... (same implementation)
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return fmt.Errorf("download request: %w", err)
+		return fmt.Errorf("failed to create request: %w", err)
 	}
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/octet-stream")
 
 	resp, err := d.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("download fetch: %w", err)
+		return fmt.Errorf("download request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("download: server returned %d", resp.StatusCode)
+		return fmt.Errorf("download failed with status: %d", resp.StatusCode)
 	}
 
-	out, err := os.Create(destPath)
+	out, err := os.Create(dest)
 	if err != nil {
-		return fmt.Errorf("download create file: %w", err)
+		return fmt.Errorf("failed to create file: %w", err)
 	}
 	defer out.Close()
 
-	if _, err := io.Copy(out, resp.Body); err != nil {
-		return fmt.Errorf("download write: %w", err)
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to save file: %w", err)
 	}
 
-	// Make executable on Unix
-	return os.Chmod(destPath, 0755)
+	return nil
 }

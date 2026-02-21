@@ -1,37 +1,50 @@
-// deploy is the CLI entry point for the deployment agent.
-//
-// Usage:
-//
-//	deploy [--config deploy.yaml]
-//
-// The config file (default: deploy.yaml) controls the deployment mode and apps.
-// Secrets (HMAC secret, GitHub PAT) are stored in the OS keyring via tinywasm/keyring.
 package main
 
 import (
 	"flag"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/tinywasm/deploy"
-	"github.com/tinywasm/keyring"
 )
 
 func main() {
-	configPath := flag.String("config", "deploy.yaml", "path to deploy.yaml")
+	admin := flag.Bool("admin", false, "Run admin menu")
 	flag.Parse()
 
-	// Inject real implementations
-	keys := keyring.New()
-	mgr := deploy.NewManager()
-	dl := deploy.NewDownloader()
+	// Initialize dependencies
+	keys := deploy.NewSystemKeyManager()
+
+	if *admin {
+		wizard := deploy.NewWizard(keys)
+		if err := wizard.RunAdmin(); err != nil {
+			log.Fatalf("admin menu failed: %v", err)
+		}
+		return
+	}
+
+	process := deploy.NewProcessManager()
+	downloader := deploy.NewDownloader()
 	checker := deploy.NewChecker()
-	files := &deploy.OSFileOps{}
 
-	d := deploy.New(keys, mgr, dl, checker, files)
+	// Determine config path
+	exePath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("failed to determine executable path: %v", err)
+	}
+	exeDir := filepath.Dir(exePath)
+	configPath := filepath.Join(exeDir, "config.yaml")
 
-	if err := d.Run(*configPath); err != nil {
-		log.Println("deploy:", err)
-		os.Exit(1)
+	d := &deploy.Deploy{
+		Keys:       keys,
+		Process:    process,
+		Downloader: downloader,
+		Checker:    checker,
+		ConfigPath: configPath,
+	}
+
+	if err := d.Run(); err != nil {
+		log.Fatalf("deploy agent failed: %v", err)
 	}
 }
