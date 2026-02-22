@@ -4,16 +4,16 @@
 graph TB
     subgraph "Windows Server 2012"
         subgraph "Startup Folder<br/>C:\Users\Admin\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
-            SF1[deploy.exe shortcut]
+            SF1[puller.exe shortcut]
             SF2[myapp-service.exe shortcut]
             SF3[otra-app.exe shortcut]
         end
         
         subgraph "d:\apps\ - Application Directory"
-            subgraph "deploy\"
-                UP1[deploy.exe]
+            subgraph "puller\"
+                UP1[puller.exe]
                 UP2[config.yaml]
-                UP3[logs\deploy.log]
+                UP3[logs\puller.log]
             end
             
             subgraph "myapp-service\"
@@ -45,7 +45,7 @@ graph TB
         end
         
         subgraph "Network - localhost"
-            NET1[Port 8080<br/>deploy API]
+            NET1[Port 8080<br/>puller API]
             NET2[Port 1200<br/>myapp-service<br/>/health endpoint]
             NET3[Port 3000<br/>otra-app<br/>/health endpoint]
         end

@@ -36,15 +36,15 @@ func main() {
 	}
 	configPath := filepath.Join(filepath.Dir(exePath), "config.yaml")
 
-	d := &deploy.Deploy{
-		Store:      &envStore{},
+	p := &deploy.Puller{
+		Store:      deploy.NewSecureStore(&envStore{}),
 		Process:    process,
 		Downloader: downloader,
 		Checker:    checker,
 		ConfigPath: configPath,
 	}
 
-	if err := d.Run(); err != nil {
-		log.Fatalf("deploy agent failed: %v", err)
+	if err := p.Run(); err != nil {
+		log.Fatalf("puller agent failed: %v", err)
 	}
 }

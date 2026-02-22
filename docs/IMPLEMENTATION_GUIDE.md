@@ -18,7 +18,7 @@
 - **Constraint**: **NEVER** use `testify` or `gomega`. Use only `testing`, `net/http/httptest`, `reflect`.
 
 ### 0.4 Mandatory Dependency Injection & Mocking
-- **No Global State**: `deploy.go` and `handler.go` must NOT call `exec.Command` or `http.Get` directly.
+- **No Global State**: `puller.go` and `handler.go` must NOT call `exec.Command` or `http.Get` directly.
 - **Interfaces**: Use `ProcessManager`, `Downloader`, `KeyManager` interfaces.
 - **Mocking**: Tests must use mocks for all external interactions.
 
@@ -26,18 +26,16 @@
 
 > **IMPORTANT**: This is a temporary implementation guide designed to serve as a work prompt for Phase 1. For the complete system architecture, refer to [ARQUITECTURE_DESIGN.md](ARQUITECTURE_DESIGN.md).
 
-## 1. Scope
-- **OS Support**: Windows Server 2012+ only for Phase 1.
-- **Distribution**: Standalone binary `deploy.exe`.
-- **Trigger**: Webhook-based (POST `/update`) from GitHub Actions.
-- **Process Lifecycle**: Managed via Windows Startup Folder.
-- **Phase 2 Preview**: Linux support via `systemd` will be documented in a separate guide.
+- **Push/Pull Architecture**: Decoupled architecture where a local **Puller** agent handles the lifecycle, triggered by external **Pushers**.
+- **OS Support (Daemon)**: Windows Server 2012+ and Linux compatible via `ProcessManager` OS abstracts.
+- **Distribution**: Standalone binary **puller.exe** or **puller**.
+- **Security**: Zero-Trust execution with HMAC and `SecureStore` (go-keyring).
 
 ## 2. Implementation Plan (Structure & Order)
 
 **External Dependencies**: `gopkg.in/yaml.v3` (for `config.yaml`).
 
-Implement components in this strict order. All logic files reside in the root `deploy/` package (Flat Hierarchy), tests in `tests/`, and the entry point in `cmd/deploy/`.
+Implement components in this strict order. All logic files reside in the root `deploy/` package (Flat Hierarchy), tests in `tests/`, and the entry point in `cmd/puller/`.
 
 | Order | File (Root `deploy/`) | Responsibility |
 |---|---|---|
@@ -49,8 +47,8 @@ Implement components in this strict order. All logic files reside in the root `d
 | 6. | `shortcut.go` | Implement Windows Shortcut creation (Architecture §4). |
 | 7. | `handler.go` | Orchestrate Security -> Download -> Process Control. |
 | 8. | `wizard.go` | Interactive TUI for setup (Architecture §4). |
-| 9. | `deploy.go` | Main `Run()` loop: Check Config ? Wizard : Server. |
-| 10. | `cmd/deploy/main.go` | **Entry Point**: Inject dependencies (`RealManager`, `RealKeyring`) and start. |
+| 9. | `puller.go` | Main `Run()` loop: Check Config ? Wizard : Server. |
+| 10.| `cmd/puller/main.go` | **Entry Point**: Inject dependencies (`RealManager`, `RealKeyring`) and start. |
 | - | `tests/*_test.go` | Unit & Integration tests (moved to `tests/` subdirectory). |
 
 ## 5. Key Contracts
@@ -59,10 +57,10 @@ Implement components in this strict order. All logic files reside in the root `d
 See [config.go](../config.go)
 
 ### Dependency Injection (Testability)
-See interfaces in [deploy.go](../deploy.go) and [downloader.go](../downloader.go) and [manager.go](../manager.go).
+See interfaces in [puller.go](../puller.go) and [downloader.go](../downloader.go) and [manager.go](../manager.go).
 
 **Implementation Strategy:**
-- **Production (`cmd/deploy/main.go`)**: 
+- **Production (`cmd/puller/main.go`)**: 
     - Inject `keyring.New()` from `tinywasm/keyring`.
     - Inject real `NewProcessManager()` (Windows specific).
     - Inject real `NewDownloader()` (net/http).
@@ -71,8 +69,8 @@ See interfaces in [deploy.go](../deploy.go) and [downloader.go](../downloader.go
     - `MockProcessManager`: Records "started" or "stopped" calls in a slice/map; does NOT execute OS commands.
     - `MockDownloader`: Simulates file creation or network errors; does NOT make HTTP requests.
 
-### Execution Flow (`Deploy.Run`)
-See [deploy.go](../deploy.go) logic.
+### Execution Flow (`Puller.Run`)
+See [puller.go](../puller.go) logic.
 
 ### Update Handler (`POST /update`)
 The full orchestration flow is detailed in [PROCESS_FLOW](diagrams/PROCESS_FLOW.md) and [WORKFLOW](diagrams/WORKFLOW.md). The handler must implement the **Polling Loop** for busy applications, retrying the health check until `can_restart: true` or the `BusyTimeout` is reached.
@@ -151,42 +149,6 @@ See [downloader.go](../downloader.go)
 ### 8.3 Windows Management
 See [manager_windows.go](../manager_windows.go) and [shortcut_windows.go](../shortcut_windows.go)
 
-## 9. RFC: Dual Purpose Support (Client vs Server)
+## 9. Historical Notes
 
-This section analyzes the proposal to split the application into two distinct binaries: a developer-side CLI and a server-side Agent.
-
-### 9.1 Questions & Considerations
-
-1.  **Authentication**: How will the CLI authenticate with the Server?
-    *   *Current*: Webhook uses HMAC.
-    *   *Proposal*: CLI generates the HMAC secret during the Wizard setup and stores it in the repository secrets (via GH Actions) and `config.yaml` on the server. The CLI itself doesn't talk directly to the server; it talks to GitHub (via `git push` or Action trigger), which then talks to the server.
-2.  **State Management**:
-    *   Server needs to know it's "configured".
-    *   CLI needs to know if the project is "configured".
-    *   *Solution*: CLI checks for `.github/workflows/deploy.yml` existence as a proxy for configuration.
-3.  **Code Sharing**:
-    *   Both binaries share `hmac.go`, `config.go`, etc.
-    *   *Constraint*: Must maintain flat structure in `deploy/`.
-    *   *Solution*: `cmd/deploy/main.go` and `cmd/updater/main.go` will both import from `github.com/tinywasm/deploy`.
-
-### 9.2 Suggestions
-
-*   **CLI Library**: Consider using `cobra` or `urfave/cli` for the `cmd/deploy` tool if flags become complex. For now, standard `flag` package is sufficient as per "Zero External Libraries" preference, though not strictly forbidden for the CLI part if needed.
-*   **Version Control**: The CLI should verify it's on the `main` branch (or configured production branch) before allowing a deploy trigger to prevent accidental deployments of feature branches.
-
-### 9.3 Pros & Cons
-
-| Strategy | Pros | Cons |
-|---|---|---|
-| **Single Binary (Current)** | Easier distribution (one file). | Confusing usage (flag switches). Bloated binary (server code on dev machine). |
-| **Dual Binary (Proposed)** | Clear separation of concerns. Smaller attack surface on server. specialized dependencies. | Two build artifacts. Slightly more complex build pipeline. |
-
-### 9.4 Best Option / Recommendation
-
-**Adopt the Dual Binary Strategy.**
-
-The clear separation between "Developer Tools" and "Runtime Agent" aligns best with security best practices and usability.
-*   `cmd/deploy`: Focuses on UX, wizard, and git integration.
-*   `cmd/updater`: Focuses on stability, uptime, and process management.
-
-See [DUAL_PURPOSE_SUPPORT.md](DUAL_PURPOSE_SUPPORT.md) for the detailed implementation plan.
+The project uses a **Push/Pull architecture**. A local **Puller** agent handles the lifecycle, triggered by external **Pushers**. See the `wizard.go` and specific `Pusher` implementations for how CLI setup and Server execution coexist.

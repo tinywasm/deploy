@@ -12,11 +12,11 @@ import (
 // TestWizard_WebhookFlow exercises the full webhook wizard step sequence.
 func TestWizard_WebhookFlow(t *testing.T) {
 	store := NewMockStore()
-	d := &deploy.Deploy{
+	p := &deploy.Puller{
 		Store: store,
 	}
 
-	steps := d.GetSteps()
+	steps := p.GetSteps()
 	if len(steps) == 0 {
 		t.Fatal("GetSteps() returned no steps")
 	}
@@ -68,9 +68,9 @@ func TestWizard_WebhookFlow(t *testing.T) {
 // TestWizard_SSHFlow exercises the SSH wizard step sequence.
 func TestWizard_SSHFlow(t *testing.T) {
 	store := NewMockStore()
-	d := &deploy.Deploy{Store: store}
+	p := &deploy.Puller{Store: store}
 
-	steps := d.GetSteps()
+	steps := p.GetSteps()
 	ctx := twctx.Background()
 
 	// Step 0: method = ssh
@@ -114,8 +114,8 @@ func TestWizard_SSHFlow(t *testing.T) {
 // TestWizard_InvalidMethod checks that an unknown method is rejected.
 func TestWizard_InvalidMethod(t *testing.T) {
 	store := NewMockStore()
-	d := &deploy.Deploy{Store: store}
-	steps := d.GetSteps()
+	p := &deploy.Puller{Store: store}
+	steps := p.GetSteps()
 	ctx := twctx.Background()
 
 	ok, err := steps[0].OnInput("ftp", ctx)

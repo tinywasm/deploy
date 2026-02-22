@@ -17,7 +17,7 @@ graph TB
     end
     
     subgraph "Windows Server 2012"
-        I --> J{deploy<br/>Puerto 8080}
+        I --> J{puller<br/>Puerto 8080}
         
         J --> K[Validar HMAC Signature]
         K --> K1{Firma valida?}

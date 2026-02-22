@@ -1,21 +1,17 @@
 # deploy - Architecture & Design
 
 > **Status**: APPROVED
-> **Version**: 1.0.0
-> **Last Updated**: 2026-02-14
+> **Version**: 1.1.0
+> **Last Updated**: 2026-02-22
 
-> ⚠️ **Implementation Status**: DESIGN PHASE — The code described below is not yet implemented.
-> The current codebase only contains the `Deploy` struct and `keyring.KeyManager` integration.
-
-## Executive Summary
-
-**deploy** is a lightweight, dependency-free Continuous Deployment (CD) agent designed specifically for **Windows Server 2012**. It enables secure, automated updates for applications directly from GitHub Actions, eliminating the need for complex infrastructure like Docker or Kubernetes on legacy Windows environments.
+**deploy** is a lightweight, dependency-free Continuous Deployment (CD) framework built on a **Push/Pull architecture**. It enables secure, automated updates for applications on Windows/Linux environments, providing a local **Puller** agent that orchestrates the deployment lifecycle and a set of **Pushers** for integration with external services (GitHub Actions, Cloudflare, SSH).
 
 **Key Features:**
-*   **Zero Dependencies**: Distributable as a single Go binary; no runtime required.
-*   **Push-Based Architecture**: Triggered by GitHub Actions via a publicly-reachable Endpoint (configurable).
-*   **Security-First**: Uses HMAC for request validation and Windows Credential Manager (DPAPI) for secure secret storage.
-*   **Resilient Deployment**: Automatic rollback functionality if the new version fails health checks.
+*   **Zero Dependencies**: Single Go binary; no runtime required.
+*   **Push/Pull Architecture**: Decouples the update orchestration (**Puller**) from the trigger mechanism (**Pusher**).
+*   **Multi-Strategy**: Supports Webhooks, Cloudflare Pages/Workers, and SSH pushers.
+*   **Security-First**: HMAC validation and OS-level secret storage (Windows Credential Manager, Keychain, Secret Service).
+*   **Resilient Deployment**: Atomic updates with automatic rollback on health-check failure.
 
 ---
 
@@ -51,15 +47,18 @@ openssl rand -base64 64 | tr -d '\n' > hmac-secret.txt
 
 Refer to [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md#81-hmac-validation-hmacgo) for the Go implementation.
 
-#### Windows Keyring (DPAPI)
-*   **Implementation**: `tinywasm/keyring` library.
-*   **Storage**: Secrets are stored in the Windows Credential Manager, encrypted with the user's login credentials.
-*   **Secrets Managed**:
-    *   `hmac-secret`: Shared secret for validating GitHub webhooks.
-    *   `github-pat`: Personal Access Token for downloading assets from private repositories.
+#### Secure Store Wrapper & Keyring
+*   **Abstraction**: A `SecureStore` wrapper intercepts all configuration `Get()` and `Set()` calls.
+*   **Storage**: Sensitive keys are routed securely to the OS Keyring via `github.com/zalando/go-keyring`.
+*   **Encrypted Secrets Managed**:
+    *   `DEPLOY_HMAC_SECRET`: Shared secret for validating webhooks.
+    *   `DEPLOY_GITHUB_PAT`: Personal Access Token for remote operations.
+    *   `DEPLOY_SSH_KEY`: SSH identity file path or content.
+    *   `CF_PAGES_TOKEN`: Cloudflare Pages API scoped token.
+    *   `CF_WORKER_TOKEN`: Cloudflare Workers API scoped token.
+*   **Protection**: This layered architecture guarantees that no sensitive tokens are ever exposed or recorded in plaintext configuration files (`config.yaml` or `kvdb`), enforcing a strict zero-exposure policy.
 
-> **Note**: `tinywasm/keyring` uses `go-keyring` internally, which is cross-platform:
-> Windows (Credential Manager/DPAPI), macOS (Keychain), Linux (Secret Service/D-Bus).
+> **Note**: `go-keyring` is cross-platform: Windows (Credential Manager/DPAPI), macOS (Keychain), Linux (Secret Service/D-Bus).
 
 ---
 
@@ -151,7 +150,7 @@ Refer to [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md#82-downloader-downloa
 ## 4. Setup & Configuration
 
 ### Interactive Setup Wizard
-The first time `deploy.exe` is run, it detects missing secrets and launches an interactive setup wizard to securely provision the Keyring.
+The first time the agent is run, it launches an interactive setup wizard to configure the chosen **Pusher** strategy and securely provision the Keyring.
 
 [Setup Wizard](./diagrams/SETUP_FLOW.md)
 

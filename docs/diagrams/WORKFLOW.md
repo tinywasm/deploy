@@ -6,7 +6,7 @@ sequenceDiagram
     participant GH as GitHub Actions
     participant GHR as GitHub Releases
     participant EP as Endpoint
-    participant UPD as deploy
+    participant UPD as puller
     participant KR as Windows Keyring
     participant FS as Filesystem (d:\apps\)
     participant APP as App (myapp-service)
