@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/tinywasm/context v0.0.18
-	github.com/tinywasm/goflare v0.1.0
+	github.com/tinywasm/goflare v0.2.1
 	github.com/tinywasm/wizard v0.0.23
 	github.com/zalando/go-keyring v0.2.6
 	gopkg.in/yaml.v3 v3.0.1
@@ -14,6 +14,9 @@ require (
 	al.essio.dev/pkg/shellescape v1.6.0 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
+	github.com/tdewolff/minify/v2 v2.24.12 // indirect
+	github.com/tdewolff/parse/v2 v2.8.11 // indirect
+	github.com/tinywasm/assetmin v0.2.1 // indirect
 	github.com/tinywasm/client v0.6.0 // indirect
 	github.com/tinywasm/devflow v0.4.14 // indirect
 	github.com/tinywasm/dom v0.6.0 // indirect
