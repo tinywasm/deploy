@@ -1,7 +1,6 @@
 package deploy_test
 
 import (
-	"strings"
 	"testing"
 
 	twctx "github.com/tinywasm/context"
@@ -35,14 +34,21 @@ func TestStrategy_PagesSetup(t *testing.T) {
 		t.Fatalf("step2 (token) failed: %v", err)
 	}
 
-	// Step 3: Project
-	// This step calls goflare.SetupPages() which will make an actual HTTP POST request to Cloudflare.
-	// Since our token is a dummy token, it will fail. We assert that it fails gracefully.
-	// If it had succeeded, CF_PAGES_TOKEN would be securely stored via the injected SecureStore.
-	_, err := steps[3].OnInput("myproject", ctx)
-	if err == nil {
-		t.Error("expected error from Cloudflare API during SetupPages with dummy token")
-	} else if !strings.Contains(err.Error(), "Cloudflare Pages setup failed") {
-		t.Errorf("expected Cloudflare Pages setup failure, got: %v", err)
+	// Step 3: Project name — now just stores credentials, no API call
+	if _, err := steps[3].OnInput("myproject", ctx); err != nil {
+		t.Fatalf("step3 (project) failed: %v", err)
+	}
+
+	// Verify token stored in goflare format
+	token, err := store.Get("goflare/myproject")
+	if err != nil || token == "" {
+		t.Errorf("expected token stored as goflare/myproject, got err=%v token=%q", err, token)
+	}
+	// Verify AccountID and ProjectName stored
+	if v, _ := store.Get("CF_ACCOUNT_ID"); v != "acc123" {
+		t.Errorf("expected CF_ACCOUNT_ID=acc123, got %q", v)
+	}
+	if v, _ := store.Get("CF_PROJECT"); v != "myproject" {
+		t.Errorf("expected CF_PROJECT=myproject, got %q", v)
 	}
 }

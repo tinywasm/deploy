@@ -9,10 +9,8 @@ import (
 
 // DaemonConfig holds all configuration needed to initialise both goflare and Puller.
 type DaemonConfig struct {
-	AppRootDir          string
 	CmdEdgeWorkerDir    string // relative input dir for edge worker source
 	DeployEdgeWorkerDir string // relative output dir for compiled artifacts
-	OutputWasmFileName  string // e.g. "app.wasm"
 	DeployConfigPath    string // path to deploy.yaml
 	Store               Store
 }
@@ -25,15 +23,9 @@ type Daemon struct {
 
 // NewDaemon creates a Daemon with fully-initialised goflare and Puller internals.
 func NewDaemon(cfg *DaemonConfig) *Daemon {
-	inputDir := cfg.CmdEdgeWorkerDir
-	outputDir := cfg.DeployEdgeWorkerDir
-
 	gw := goflare.New(&goflare.Config{
-		AppRootDir:              cfg.AppRootDir,
-		RelativeInputDirectory:  func() string { return inputDir },
-		RelativeOutputDirectory: func() string { return outputDir },
-		MainInputFile:           "main.go",
-		OutputWasmFileName:      cfg.OutputWasmFileName,
+		Entry:     cfg.CmdEdgeWorkerDir,
+		OutputDir: cfg.DeployEdgeWorkerDir,
 	})
 
 	puller := &Puller{

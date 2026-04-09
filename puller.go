@@ -85,6 +85,13 @@ func (p *Puller) Run() error {
 	switch s := strat.(type) {
 	case *CloudflarePagesPusher:
 		s.Goflare = p.Goflare
+		// Restore Config values from store (set during wizard)
+		if accountID, err := p.Store.Get("CF_ACCOUNT_ID"); err == nil {
+			s.Goflare.Config.AccountID = accountID
+		}
+		if project, err := p.Store.Get("CF_PROJECT"); err == nil {
+			s.Goflare.Config.ProjectName = project
+		}
 	case *CloudflareWorkerPusher:
 		s.Goflare = p.Goflare
 	}

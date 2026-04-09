@@ -56,15 +56,28 @@ func (s *CloudflarePagesPusher) WizardSteps(store Store, log func(...any)) []*wi
 			},
 		},
 		{
-			LabelText: "Cloudflare Pages project name (create it first at pages.cloudflare.com)",
+			LabelText: "Cloudflare Pages project name (will be auto-created on first deploy)",
 			OnInputFn: func(input string, ctx *context.Context) (bool, error) {
 				if input == "" {
 					return false, fmt.Errorf("project name cannot be empty")
 				}
 				accountID := ctx.Value(ctxCFAccount)
-				bootstrapToken := ctx.Value(ctxCFToken)
-				if err := cf.SetupPages(store, accountID, bootstrapToken, input); err != nil {
-					return false, fmt.Errorf("Cloudflare Pages setup failed: %w", err)
+				token := ctx.Value(ctxCFToken)
+
+				// Configure goflare instance for future DeployPages calls
+				cf.Config.ProjectName = input
+				cf.Config.AccountID = accountID
+
+				// Store token in goflare's expected format: "goflare/<ProjectName>"
+				if err := store.Set("goflare/"+input, token); err != nil {
+					return false, fmt.Errorf("failed to store token: %w", err)
+				}
+				// Store AccountID and ProjectName for Puller.Run to reconstruct goflare.Config
+				if err := store.Set("CF_ACCOUNT_ID", accountID); err != nil {
+					return false, err
+				}
+				if err := store.Set("CF_PROJECT", input); err != nil {
+					return false, err
 				}
 				return true, nil
 			},
