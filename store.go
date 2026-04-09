@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/zalando/go-keyring"
 )
@@ -36,6 +37,12 @@ var sensitiveKeys = map[string]bool{
 	"CF_WORKER_TOKEN":    true,
 }
 
+// isSensitive reports whether the given key contains sensitive information
+// that should be stored in the OS keyring.
+func isSensitive(key string) bool {
+	return sensitiveKeys[key] || strings.HasPrefix(key, "goflare/")
+}
+
 // SecureStore wraps a base Store and routes sensitive keys securely to the OS keyring.
 // Minimal interface: no adapter needed for the base KVStore.
 type SecureStore struct {
@@ -49,7 +56,7 @@ func NewSecureStore(base Store) *SecureStore {
 
 // Get retrieves a key. Sensitive keys are fetched only from the keyring.
 func (s *SecureStore) Get(key string) (string, error) {
-	if sensitiveKeys[key] {
+	if isSensitive(key) {
 		val, err := keyring.Get(KeyringServiceName, key)
 		if err != nil {
 			return "", fmt.Errorf("secure store: key %q not found in keyring: %w", key, err)
@@ -62,7 +69,7 @@ func (s *SecureStore) Get(key string) (string, error) {
 // Set stores a key. Sensitive keys are saved only to the keyring,
 // and concurrently wiped from the base store to prevent plaintext leaks.
 func (s *SecureStore) Set(key, value string) error {
-	if sensitiveKeys[key] {
+	if isSensitive(key) {
 		if err := keyring.Set(KeyringServiceName, key, value); err != nil {
 			return fmt.Errorf("secure store: failed to save %q to keyring: %w", key, err)
 		}

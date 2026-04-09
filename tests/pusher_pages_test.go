@@ -13,10 +13,16 @@ import (
 func TestStrategy_PagesSetup(t *testing.T) {
 	keyring.MockInit()
 	baseStore := NewMockStore()
-	store := deploy.NewSecureStore(baseStore)
 
-	p := &deploy.Puller{Store: store}
-	steps := p.GetSteps()
+	d := deploy.NewDaemon(&deploy.DaemonConfig{
+		EdgeDir:   "edge",
+		OutputDir: ".build",
+		Store:     baseStore,
+	})
+	p := d.Puller()
+	puller := p.(*deploy.Puller)
+
+	steps := puller.GetSteps()
 	ctx := twctx.Background()
 
 	// Step 0: method = cloudflarePages
@@ -29,8 +35,8 @@ func TestStrategy_PagesSetup(t *testing.T) {
 		t.Fatalf("step1 (account) failed: %v", err)
 	}
 
-	// Step 2: Bootstrap Token
-	if _, err := steps[2].OnInput("this_is_a_bootstrap_token_long_enough", ctx); err != nil {
+	// Step 2: Token
+	if _, err := steps[2].OnInput("this_is_a_token_long_enough", ctx); err != nil {
 		t.Fatalf("step2 (token) failed: %v", err)
 	}
 
@@ -39,16 +45,16 @@ func TestStrategy_PagesSetup(t *testing.T) {
 		t.Fatalf("step3 (project) failed: %v", err)
 	}
 
-	// Verify token stored in goflare format
-	token, err := store.Get("goflare/myproject")
+	// Verify token stored in goflare format (in keyring via SecureStore)
+	token, err := keyring.Get(deploy.KeyringServiceName, "goflare/myproject")
 	if err != nil || token == "" {
-		t.Errorf("expected token stored as goflare/myproject, got err=%v token=%q", err, token)
+		t.Errorf("expected token stored as goflare/myproject in keyring, got err=%v token=%q", err, token)
 	}
-	// Verify AccountID and ProjectName stored
-	if v, _ := store.Get("CF_ACCOUNT_ID"); v != "acc123" {
+	// Verify AccountID and ProjectName stored in baseStore
+	if v, _ := baseStore.Get("CF_ACCOUNT_ID"); v != "acc123" {
 		t.Errorf("expected CF_ACCOUNT_ID=acc123, got %q", v)
 	}
-	if v, _ := store.Get("CF_PROJECT"); v != "myproject" {
+	if v, _ := baseStore.Get("CF_PROJECT"); v != "myproject" {
 		t.Errorf("expected CF_PROJECT=myproject, got %q", v)
 	}
 }

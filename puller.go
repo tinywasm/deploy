@@ -13,8 +13,6 @@ package deploy
 import (
 	"fmt"
 	"os"
-
-	"github.com/tinywasm/goflare"
 )
 
 // Puller is the main orchestrator for all deployment modes.
@@ -25,7 +23,7 @@ type Puller struct {
 	Downloader Downloader
 	Checker    HealthChecker
 	ConfigPath string
-	Goflare    *goflare.Goflare // Injected for edgeWorker strategy
+	Provider   Provider // replaces: Goflare *goflare.Goflare
 	log        func(...any)
 }
 
@@ -62,6 +60,11 @@ func (p *Puller) Run() error {
 		method = "cloudflarePages"
 	}
 
+	// Use provider for supported deployment methods
+	if p.Provider != nil && p.Provider.Supports(method) {
+		return p.Provider.Deploy(p.Store)
+	}
+
 	strat, err := GetPusher(method)
 	if err != nil {
 		return err
@@ -79,21 +82,6 @@ func (p *Puller) Run() error {
 		if err != nil {
 			return fmt.Errorf("deploy: reload config: %w", err)
 		}
-	}
-
-	// Inject Goflare if the strategy needs it.
-	switch s := strat.(type) {
-	case *CloudflarePagesPusher:
-		s.Goflare = p.Goflare
-		// Restore Config values from store (set during wizard)
-		if accountID, err := p.Store.Get("CF_ACCOUNT_ID"); err == nil {
-			s.Goflare.Config.AccountID = accountID
-		}
-		if project, err := p.Store.Get("CF_PROJECT"); err == nil {
-			s.Goflare.Config.ProjectName = project
-		}
-	case *CloudflareWorkerPusher:
-		s.Goflare = p.Goflare
 	}
 
 	return strat.Run(cfg, p)

@@ -9,7 +9,7 @@
 **Key Features:**
 *   **Zero Dependencies**: Single Go binary; no runtime required.
 *   **Push/Pull Architecture**: Decouples the update orchestration (**Puller**) from the trigger mechanism (**Pusher**).
-*   **Multi-Strategy**: Supports Webhooks, Cloudflare Pages/Workers, and SSH pushers.
+*   **Provider-Agnostic**: Supports multiple deployment targets (Cloudflare, Webhooks, SSH) via a common `Provider` interface.
 *   **Security-First**: HMAC validation and OS-level secret storage (Windows Credential Manager, Keychain, Secret Service).
 *   **Resilient Deployment**: Atomic updates with automatic rollback on health-check failure.
 
@@ -54,8 +54,9 @@ Refer to [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md#81-hmac-validation-hm
     *   `DEPLOY_HMAC_SECRET`: Shared secret for validating webhooks.
     *   `DEPLOY_GITHUB_PAT`: Personal Access Token for remote operations.
     *   `DEPLOY_SSH_KEY`: SSH identity file path or content.
-    *   `CF_PAGES_TOKEN`: Cloudflare Pages API scoped token.
-    *   `CF_WORKER_TOKEN`: Cloudflare Workers API scoped token.
+    *   `goflare/<ProjectName>`: Cloudflare API scoped token (Workers:Edit + Pages:Edit).
+    *   `CF_PAGES_TOKEN`: (Legacy) Cloudflare Pages API scoped token.
+    *   `CF_WORKER_TOKEN`: (Legacy) Cloudflare Workers API scoped token.
 *   **Protection**: This layered architecture guarantees that no sensitive tokens are ever exposed or recorded in plaintext configuration files (`config.yaml` or `kvdb`), enforcing a strict zero-exposure policy.
 
 > **Note**: `go-keyring` is cross-platform: Windows (Credential Manager/DPAPI), macOS (Keychain), Linux (Secret Service/D-Bus).
