@@ -15,6 +15,34 @@
 
 ---
 
+## 1. Provider Architecture
+
+To support evolving deployment targets, the system uses a provider-agnostic interface. The core orchestrator (`Puller`) interacts only with the `Provider` interface, while specific implementations live in the `providers/` directory.
+
+### Provider Interface
+The `Provider` handles building and deploying artifacts for a specific platform.
+
+```go
+type Provider interface {
+    Build() error
+    Deploy(store Store) error
+    SetLog(f func(...any))
+    WizardSteps(store Store, log func(...any)) []*wizard.Step
+    Supports(method string) bool
+    // devwatch integration
+    MainInputFileRelativePath() string
+    NewFileEvent(fileName, extension, filePath, event string) error
+    SupportedExtensions() []string
+    UnobservedFiles() []string
+}
+```
+
+### Supported Providers
+1.  **Cloudflare**: Implemented via `providers/cloudflare`, wrapping `github.com/tinywasm/goflare`. Supports both Cloudflare Pages and Workers.
+2.  **Webhooks & SSH**: Legacy strategies supported through the `Pusher` registry for backward compatibility.
+
+---
+
 ## 1. System Components
 
 The architecture leverages existing Windows capabilities (Startup Folder, Task Scheduler) and secure tunneling to expose a local updater service to GitHub Actions.

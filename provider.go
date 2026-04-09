@@ -2,6 +2,13 @@ package deploy
 
 import "github.com/tinywasm/wizard"
 
+// Store is the interface for the deployment configuration and secret storage.
+// It is defined here to allow providers to reference it without circular imports.
+type Store interface {
+	Get(key string) (string, error)
+	Set(key, value string) error
+}
+
 // Provider is the interface for a deployment target backend.
 // Implementations wrap provider-specific tools (goflare, SSH, etc).
 // tinywasm/app depends only on this interface — never on goflare directly.

@@ -22,11 +22,7 @@ import (
 //	CF_PAGES_TOKEN      → Cloudflare scoped Pages:Edit token (auto-created)
 //	CF_PROJECT          → Cloudflare project name
 //	CF_WORKER_TOKEN     → Cloudflare scoped Workers:Edit token
-type Store interface {
-	Get(key string) (string, error)
-	Set(key, value string) error
-}
-
+// KeyringServiceName is the service name used for storing secrets in the OS keyring.
 const KeyringServiceName = "tinywasm-deploy"
 
 var sensitiveKeys = map[string]bool{
