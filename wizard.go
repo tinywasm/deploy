@@ -60,7 +60,13 @@ func (p *Puller) GetSteps() []*wizard.Step {
 			if err := p.Store.Set("DEPLOY_METHOD", method); err != nil {
 				return false, fmt.Errorf("store method: %w", err)
 			}
-			dynamic.steps = strat.WizardSteps(p.Store, p.log) // pass the file logger for actual execution logs
+
+			// If provider supports this method, use its wizard steps
+			if p.Provider != nil && p.Provider.Supports(method) {
+				dynamic.steps = p.Provider.WizardSteps(p.Store, p.log)
+			} else {
+				dynamic.steps = strat.WizardSteps(p.Store, p.log) // pass the file logger for actual execution logs
+			}
 			return true, nil
 		},
 	}

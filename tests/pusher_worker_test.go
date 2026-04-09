@@ -13,10 +13,16 @@ import (
 func TestStrategy_WorkerSetup(t *testing.T) {
 	keyring.MockInit()
 	baseStore := NewMockStore()
-	store := deploy.NewSecureStore(baseStore)
 
-	p := &deploy.Puller{Store: store}
-	steps := p.GetSteps()
+	d := deploy.NewDaemon(&deploy.DaemonConfig{
+		EdgeDir:   "edge",
+		OutputDir: ".build",
+		Store:     baseStore,
+	})
+	p := d.Puller()
+	puller := p.(*deploy.Puller)
+
+	steps := puller.GetSteps()
 	ctx := twctx.Background()
 
 	// Step 0: method = cloudflareWorker
@@ -29,8 +35,8 @@ func TestStrategy_WorkerSetup(t *testing.T) {
 		t.Fatalf("step1 (account) failed: %v", err)
 	}
 
-	// Step 2: Worker Token
-	tokenInput := "this_is_a_worker_token_long_enough"
+	// Step 2: Token
+	tokenInput := "this_is_a_token_long_enough"
 	if _, err := steps[2].OnInput(tokenInput, ctx); err != nil {
 		t.Fatalf("step2 (token) failed: %v", err)
 	}
@@ -43,14 +49,14 @@ func TestStrategy_WorkerSetup(t *testing.T) {
 	// --- Verification of Secure Storage ---
 
 	// 1. Should be in Keyring
-	val, err := keyring.Get(deploy.KeyringServiceName, "CF_WORKER_TOKEN")
+	val, err := keyring.Get(deploy.KeyringServiceName, "goflare/myproject")
 	if err != nil || val != tokenInput {
-		t.Errorf("expected CF_WORKER_TOKEN in keyring")
+		t.Errorf("expected goflare/myproject in keyring, got err=%v", err)
 	}
 
 	// 2. Should NOT be in base Store
-	if val, _ := baseStore.Get("CF_WORKER_TOKEN"); val != "" {
-		t.Errorf("expected CF_WORKER_TOKEN to be empty in base store, got %q", val)
+	if val, _ := baseStore.Get("goflare/myproject"); val != "" {
+		t.Errorf("expected goflare/myproject to be empty in base store, got %q", val)
 	}
 
 	// 3. Non-sensitive config should be in base Store

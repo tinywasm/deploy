@@ -97,3 +97,12 @@ The Agent is a long-running process on the Windows Server.
 -   **File Structure**: All shared logic remains in root `deploy/`. New specific logic for CLI or Agent stays in `cmd/` or designated files (e.g., `cli_check.go` in root if shared, or kept in `cmd` if exclusive).
 -   **Testing**: New integration tests must be added to `tests/` covering the CLI detection logic (mocking file system) and the Updater's listening loop.
 -   **Dependencies**: No external libraries for testing. Use `os` and `testing` packages.
+
+## 6. Provider-Agnostic Evolution
+
+With the introduction of the `Provider` interface, the system can now support Cloudflare-specific workflows (Pages/Workers) without polluting the core `Puller` logic.
+
+### 6.1 Cloudflare Provider (`providers/cloudflare`)
+- **Developer CLI**: Uses the provider to build and deploy locally during development.
+- **Server Agent**: The `Puller` delegates the `Deploy` call to the Cloudflare provider when `DEPLOY_METHOD` is set to `cloudflarePages` or `cloudflareWorker`.
+- **Credential Storage**: Uses the `goflare/<ProjectName>` key format in the secure store.

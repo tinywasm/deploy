@@ -45,10 +45,12 @@ Implement components in this strict order. All logic files reside in the root `d
 | 4. | `downloader.go` | Implement `HTTPDownloader` with Bearer Auth (Architecture §3). |
 | 5. | `manager.go` | Implement `WindowsManager` with `taskkill` and `HIDE_WINDOW` (Architecture §5). |
 | 6. | `shortcut.go` | Implement Windows Shortcut creation (Architecture §4). |
-| 7. | `handler.go` | Orchestrate Security -> Download -> Process Control. |
-| 8. | `wizard.go` | Interactive TUI for setup (Architecture §4). |
-| 9. | `puller.go` | Main `Run()` loop: Check Config ? Wizard : Server. |
-| 10.| `cmd/puller/main.go` | **Entry Point**: Inject dependencies (`RealManager`, `RealKeyring`) and start. |
+| 7. | `provider.go` | Define `Provider` and `Store` interfaces. |
+| 8. | `providers/` | Implement provider-specific backends (e.g., `cloudflare`). |
+| 9. | `composer.go` | `NewDaemon` handles provider orchestration. |
+| 10.| `puller.go` | Main `Run()` loop: Delegates to `Provider` if available. |
+| 11.| `wizard.go` | Interactive TUI: Delegates to `Provider.WizardSteps`. |
+| 12.| `cmd/puller/main.go` | **Entry Point**: Inject dependencies and start. |
 | - | `tests/*_test.go` | Unit & Integration tests (moved to `tests/` subdirectory). |
 
 ## 5. Key Contracts
