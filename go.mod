@@ -18,7 +18,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.8.11 // indirect
 	github.com/tinywasm/assetmin v0.2.2 // indirect
 	github.com/tinywasm/client v0.6.0 // indirect
-	github.com/tinywasm/devflow v0.4.17 // indirect
+	github.com/tinywasm/devflow v0.4.18 // indirect
 	github.com/tinywasm/dom v0.7.2 // indirect
 	github.com/tinywasm/fetch v0.1.23 // indirect
 	github.com/tinywasm/fmt v0.23.5 // indirect
