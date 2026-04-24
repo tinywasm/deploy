@@ -27,8 +27,8 @@ func New(edgeDir, outputDir string) *Provider {
 func (p *Provider) Build() error { return p.gf.Build() }
 
 func (p *Provider) Deploy(store interface {
-	Get(key string) (string, error)
-	Set(key, value string) error
+	Get(string) (string, error)
+	Set(string, string) error
 }) error {
 	// Restore config from store (set during wizard)
 	if accountID, err := store.Get("CF_ACCOUNT_ID"); err == nil && accountID != "" {
@@ -64,8 +64,8 @@ func (p *Provider) Supports(method string) bool {
 }
 
 func (p *Provider) WizardSteps(store interface {
-	Get(key string) (string, error)
-	Set(key, value string) error
+	Get(string) (string, error)
+	Set(string, string) error
 }, log func(...any)) []*wizard.Step {
 	p.gf.SetLog(log)
 	const ctxAccount = "cf_account"

@@ -66,6 +66,9 @@ func (s *SecureStore) Get(key string) (string, error) {
 // and concurrently wiped from the base store to prevent plaintext leaks.
 func (s *SecureStore) Set(key, value string) error {
 	if isSensitive(key) {
+		if value == "" {
+			return keyring.Delete(KeyringServiceName, key)
+		}
 		if err := keyring.Set(KeyringServiceName, key, value); err != nil {
 			return fmt.Errorf("secure store: failed to save %q to keyring: %w", key, err)
 		}
