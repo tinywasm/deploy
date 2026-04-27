@@ -19,7 +19,7 @@ require (
 	github.com/tinywasm/assetmin v0.2.4 // indirect
 	github.com/tinywasm/client v0.6.5 // indirect
 	github.com/tinywasm/devflow v0.4.19 // indirect
-	github.com/tinywasm/dom v0.7.4 // indirect
+	github.com/tinywasm/dom v0.7.5 // indirect
 	github.com/tinywasm/fetch v0.1.23 // indirect
 	github.com/tinywasm/fmt v0.23.6 // indirect
 	github.com/tinywasm/form v0.2.2 // indirect
