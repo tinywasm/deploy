@@ -20,7 +20,7 @@ require (
 	github.com/tinywasm/client v0.6.8 // indirect
 	github.com/tinywasm/css v0.1.0 // indirect
 	github.com/tinywasm/devflow v0.4.21 // indirect
-	github.com/tinywasm/dom v0.9.3 // indirect
+	github.com/tinywasm/dom v0.9.4 // indirect
 	github.com/tinywasm/fetch v0.1.23 // indirect
 	github.com/tinywasm/fmt v0.23.9 // indirect
 	github.com/tinywasm/form v0.2.3 // indirect
