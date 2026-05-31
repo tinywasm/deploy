@@ -42,9 +42,9 @@ func (p *Provider) Deploy(store interface {
 	// Defaults to DeployPages (goflare v0.1.0's main entry point).
 	method, _ := store.Get("DEPLOY_METHOD")
 	if method == "cloudflareWorker" {
-		return p.gf.DeployWorker(store)
+		return p.gf.DeployWorker()
 	}
-	return p.gf.Deploy(store)
+	return p.gf.Deploy()
 }
 
 func (p *Provider) SetLog(f func(...any)) { p.gf.SetLog(f) }
