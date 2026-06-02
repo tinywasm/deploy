@@ -16,7 +16,7 @@ require (
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/tdewolff/minify/v2 v2.24.12 // indirect
 	github.com/tdewolff/parse/v2 v2.8.11 // indirect
-	github.com/tinywasm/assetmin v0.3.5 // indirect
+	github.com/tinywasm/assetmin v0.4.1 // indirect
 	github.com/tinywasm/client v0.6.13 // indirect
 	github.com/tinywasm/css v0.1.2 // indirect
 	github.com/tinywasm/devflow v0.4.28 // indirect
@@ -30,6 +30,7 @@ require (
 	github.com/tinywasm/js v0.0.4 // indirect
 	github.com/tinywasm/json v0.5.2 // indirect
 	github.com/tinywasm/mcp v0.1.9 // indirect
+	github.com/tinywasm/svg v0.0.5 // indirect
 	github.com/tinywasm/time v0.5.0 // indirect
 	github.com/tinywasm/tinygo v0.0.11 // indirect
 	github.com/tinywasm/unixid v0.2.23 // indirect
