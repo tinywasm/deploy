@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/tinywasm/update"
 	"gopkg.in/yaml.v3"
 )
 
@@ -115,57 +116,31 @@ WaitLoop:
 	// 6. Stop Existing Process
 	_ = h.Process.Stop(app.Executable)
 
-	// 7. Backup Existing Binary
 	appPath := filepath.Join(app.Path, app.Executable)
-	backupPath := filepath.Join(app.Path, app.Executable+".old")
 
-	if _, err := os.Stat(appPath); err == nil {
-		if err := os.Rename(appPath, backupPath); err != nil {
-			http.Error(w, fmt.Sprintf("Failed to backup: %v", err), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	// 8. Move New Binary
-	if err := os.Rename(tempFile, appPath); err != nil {
-		// Try to restore backup
-		_ = os.Rename(backupPath, appPath)
-		// Restart old process if move failed
-		_ = h.Process.Start(appPath)
+	// 7+8. Atomic Swap (update owns backup/restore). tempFile is already downloaded.
+	backupPath, err := update.Swap(appPath, tempFile)
+	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to install: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// 9. Start New Process
+	// 9. Start new process; if it fails, rollback to previous binary.
 	if err := h.Process.Start(appPath); err != nil {
-		// Rollback
-		// Rename failed binary to app-failed.exe
-		failedPath := filepath.Join(app.Path, "app-failed.exe")
-		_ = os.Remove(failedPath) // Ensure target doesn't exist (Windows)
-		_ = os.Rename(appPath, failedPath)
-
-		_ = os.Rename(backupPath, appPath)
-		_ = h.Process.Start(appPath) // Try to restart old version
+		_ = update.Rollback(appPath, backupPath)
+		_ = h.Process.Start(appPath)
 		http.Error(w, fmt.Sprintf("Failed to start: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// 10. Health Check New Process
+	// 10. Health-check; rollback if not healthy.
 	if app.StartupDelay > 0 {
 		time.Sleep(app.StartupDelay)
 	}
-
 	newStatus, err := h.Checker.Check(app.HealthEndpoint)
-	if err != nil || newStatus.Status != "ok" { // Assuming "ok" is success criteria
-		// Rollback
+	if err != nil || newStatus.Status != "ok" {
 		_ = h.Process.Stop(app.Executable)
-
-		// Rename failed binary to app-failed.exe
-		failedPath := filepath.Join(app.Path, "app-failed.exe")
-		_ = os.Remove(failedPath) // Ensure target doesn't exist
-		_ = os.Rename(appPath, failedPath)
-
-		_ = os.Rename(backupPath, appPath)
+		_ = update.Rollback(appPath, backupPath)
 		_ = h.Process.Start(appPath)
 		http.Error(w, "New version failed health check", http.StatusInternalServerError)
 		return

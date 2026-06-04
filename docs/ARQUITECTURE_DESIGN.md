@@ -53,6 +53,8 @@ The architecture leverages existing Windows capabilities (Startup Folder, Task S
 
 [Process Flow](./diagrams/PROCESS_FLOW.md)
 
+Atomic binary replacement (backup, swap, and rollback) is delegated to the [`github.com/tinywasm/update`](https://github.com/tinywasm/update) package. The `deploy` agent orchestrates the download, process lifecycle, and health verification, while the low-level file operations are handled by the external dependency.
+
 ---
 
 ## 2. Security Architecture
@@ -243,10 +245,7 @@ Refer to [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md#83-windows-management
 Since the applications are started via the Windows Startup Folder, consistent filenames are critical. 
 
 *   **Constraint**: The executable pointed to by the shortcut (e.g., `myapp-service.exe`) must **always** exist.
-*   **Solution**: The updater performs a rename-and-replace strategy:
-    1.  Rename current `app.exe` to `app-older.exe`.
-    2.  Move new binary to `app.exe`.
-This ensures that if the server reboots, the Startup Folder shortcut will always launch the latest deployed version.
+*   **Solution**: The updater performs an atomic swap strategy (delegated to `github.com/tinywasm/update`). This ensures that if the server reboots, the Startup Folder shortcut will always launch the latest healthy deployed version.
 
 ### Process Management Implementation
 The updater uses `taskkill` for termination and `CREATE_NEW_PROCESS_GROUP` for decoupled execution. 
