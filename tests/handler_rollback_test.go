@@ -16,7 +16,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func TestHandleUpdate_Rollback_CreatesFailedArtifact(t *testing.T) {
+func TestHandleUpdate_Rollback_RestoresBinary(t *testing.T) {
 	// Setup
 	tmpDir := t.TempDir()
 	appDir := filepath.Join(tmpDir, "app")
@@ -83,21 +83,16 @@ func TestHandleUpdate_Rollback_CreatesFailedArtifact(t *testing.T) {
 		t.Errorf("expected 500 Internal Server Error, got %d", w.Result().StatusCode)
 	}
 
-	// Verify app-failed.exe exists
-	failedArtifactPath := filepath.Join(appDir, "app-failed.exe")
-	if _, err := os.Stat(failedArtifactPath); os.IsNotExist(err) {
-		t.Errorf("expected app-failed.exe to be created")
-	} else {
-		content, _ := os.ReadFile(failedArtifactPath)
-		if string(content) != "mock downloaded content" {
-			t.Errorf("expected app-failed.exe content 'mock downloaded content', got '%s'", string(content))
-		}
-	}
-
 	// Verify app.exe is restored
 	content, _ := os.ReadFile(exePath)
 	if string(content) != "old binary" {
 		t.Errorf("expected app.exe restored to 'old binary', got '%s'", string(content))
+	}
+
+	// Verify backup is gone after rollback
+	backupPath := exePath + ".old"
+	if _, err := os.Stat(backupPath); err == nil {
+		t.Errorf("expected backup %s to be gone after rollback", backupPath)
 	}
 }
 
