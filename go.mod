@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/tinywasm/context v0.0.18
-	github.com/tinywasm/goflare v0.3.2
+	github.com/tinywasm/goflare v0.3.3
 	github.com/tinywasm/update v0.0.2
 	github.com/tinywasm/wizard v0.0.23
 	github.com/zalando/go-keyring v0.2.6
@@ -15,6 +15,7 @@ require (
 	al.essio.dev/pkg/shellescape v1.6.0 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
+	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/tdewolff/minify/v2 v2.24.12 // indirect
 	github.com/tdewolff/parse/v2 v2.8.11 // indirect
 	github.com/tinywasm/assetmin v0.4.2 // indirect
@@ -37,4 +38,5 @@ require (
 	github.com/tinywasm/unixid v0.2.23 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/term v0.41.0 // indirect
+	lukechampine.com/blake3 v1.4.1 // indirect
 )
