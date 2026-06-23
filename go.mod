@@ -19,19 +19,18 @@ require (
 	github.com/tdewolff/minify/v2 v2.24.12 // indirect
 	github.com/tdewolff/parse/v2 v2.8.11 // indirect
 	github.com/tinywasm/assetmin v0.4.2 // indirect
-	github.com/tinywasm/client v0.6.13 // indirect
+	github.com/tinywasm/client v0.6.14 // indirect
 	github.com/tinywasm/css v0.1.2 // indirect
 	github.com/tinywasm/devflow v0.4.33 // indirect
 	github.com/tinywasm/dom v0.10.1 // indirect
 	github.com/tinywasm/fetch v0.1.24 // indirect
-	github.com/tinywasm/fmt v0.24.0 // indirect
-	github.com/tinywasm/form v0.2.8 // indirect
+	github.com/tinywasm/fmt v0.24.4 // indirect
 	github.com/tinywasm/gobuild v0.0.25 // indirect
 	github.com/tinywasm/gorun v0.0.23 // indirect
 	github.com/tinywasm/html v0.0.4 // indirect
 	github.com/tinywasm/js v0.0.4 // indirect
-	github.com/tinywasm/json v0.5.2 // indirect
-	github.com/tinywasm/mcp v0.1.9 // indirect
+	github.com/tinywasm/json v0.5.4 // indirect
+	github.com/tinywasm/mcp v0.1.10 // indirect
 	github.com/tinywasm/svg v0.0.5 // indirect
 	github.com/tinywasm/time v0.5.0 // indirect
 	github.com/tinywasm/tinygo v0.0.11 // indirect
