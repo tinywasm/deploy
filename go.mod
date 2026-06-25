@@ -7,19 +7,18 @@ require (
 	github.com/tinywasm/goflare v0.3.6
 	github.com/tinywasm/update v0.0.2
 	github.com/tinywasm/wizard v0.0.23
-	github.com/zalando/go-keyring v0.2.6
+	github.com/zalando/go-keyring v0.2.8
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	al.essio.dev/pkg/shellescape v1.6.0 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/tdewolff/minify/v2 v2.24.12 // indirect
 	github.com/tdewolff/parse/v2 v2.8.11 // indirect
 	github.com/tinywasm/assetmin v0.4.2 // indirect
-	github.com/tinywasm/client v0.6.14 // indirect
+	github.com/tinywasm/client v0.6.15 // indirect
 	github.com/tinywasm/css v0.1.2 // indirect
 	github.com/tinywasm/devflow v0.4.33 // indirect
 	github.com/tinywasm/dom v0.10.1 // indirect
@@ -35,7 +34,7 @@ require (
 	github.com/tinywasm/time v0.5.0 // indirect
 	github.com/tinywasm/tinygo v0.0.11 // indirect
 	github.com/tinywasm/unixid v0.2.23 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/term v0.41.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/term v0.44.0 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
