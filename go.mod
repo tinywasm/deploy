@@ -17,7 +17,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/tdewolff/minify/v2 v2.24.12 // indirect
 	github.com/tdewolff/parse/v2 v2.8.11 // indirect
-	github.com/tinywasm/assetmin v0.4.5 // indirect
+	github.com/tinywasm/assetmin v0.4.6 // indirect
 	github.com/tinywasm/client v0.6.23 // indirect
 	github.com/tinywasm/css v0.1.4 // indirect
 	github.com/tinywasm/devflow v0.4.43 // indirect
