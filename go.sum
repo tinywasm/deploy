@@ -18,8 +18,8 @@ github.com/tdewolff/parse/v2 v2.8.11 h1:SGyjEy3xEqd+W9WVzTlTQ5GkP/en4a1AZNZVJ1cv
 github.com/tdewolff/parse/v2 v2.8.11/go.mod h1:Hwlni2tiVNKyzR1o6nUs4FOF07URA+JLBLd6dlIXYqo=
 github.com/tdewolff/test v1.0.11 h1:FdLbwQVHxqG16SlkGveC0JVyrJN62COWTRyUFzfbtBE=
 github.com/tdewolff/test v1.0.11/go.mod h1:XPuWBzvdUzhCuxWO1ojpXsyzsA5bFoS3tO/Q3kFuTG8=
-github.com/tinywasm/assetmin v0.4.4 h1:ODoS2V/CsPkj+QVr3jJb5Q+W3qunYINHe7pISjDmZ4k=
-github.com/tinywasm/assetmin v0.4.4/go.mod h1:ERUdXixZwUQUA+voKIUCg1PPqiC6hor6jy6XhDZpCuk=
+github.com/tinywasm/assetmin v0.4.5 h1:t1dkgvclpHT0XNVDxuO3R7I2HNZwmDi7awit35+MsWw=
+github.com/tinywasm/assetmin v0.4.5/go.mod h1:h0zGDLpUYkIBcTY1FeVlhwU3xEbEB47pfmmfJEsV+is=
 github.com/tinywasm/client v0.6.22 h1:ImPhMeL6aZafTYhRHRmQtsB1RGdrAZOvkPy2zIblcts=
 github.com/tinywasm/client v0.6.22/go.mod h1:U/sPDs5U9r4yWp52zExpO48tqctu/YqbwW2b0sfxVrc=
 github.com/tinywasm/context v0.0.18 h1:uKeiAFo6L/PikGSbUu+xcyELGoa4kXomDNwJOlhxrUE=
