@@ -30,8 +30,8 @@ require (
 	github.com/tinywasm/js v0.0.4 // indirect
 	github.com/tinywasm/json v0.5.11 // indirect
 	github.com/tinywasm/mcp v0.1.22 // indirect
-	github.com/tinywasm/model v0.0.12 // indirect
-	github.com/tinywasm/router v0.1.10 // indirect
+	github.com/tinywasm/model v0.0.13 // indirect
+	github.com/tinywasm/router v0.1.11 // indirect
 	github.com/tinywasm/svg v0.1.3 // indirect
 	github.com/tinywasm/time v0.5.0 // indirect
 	github.com/tinywasm/tinygo v0.0.11 // indirect
