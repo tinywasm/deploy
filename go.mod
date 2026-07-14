@@ -29,7 +29,7 @@ require (
 	github.com/tinywasm/html v0.0.6 // indirect
 	github.com/tinywasm/js v0.0.4 // indirect
 	github.com/tinywasm/json v0.5.11 // indirect
-	github.com/tinywasm/mcp v0.1.21 // indirect
+	github.com/tinywasm/mcp v0.1.22 // indirect
 	github.com/tinywasm/model v0.0.12 // indirect
 	github.com/tinywasm/router v0.1.10 // indirect
 	github.com/tinywasm/svg v0.1.3 // indirect
