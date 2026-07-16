@@ -29,13 +29,13 @@ require (
 	github.com/tinywasm/html v0.0.6 // indirect
 	github.com/tinywasm/js v0.0.4 // indirect
 	github.com/tinywasm/json v0.5.11 // indirect
-	github.com/tinywasm/mcp v0.1.22 // indirect
+	github.com/tinywasm/mcp v0.2.0 // indirect
 	github.com/tinywasm/model v0.0.15 // indirect
-	github.com/tinywasm/router v0.1.12 // indirect
+	github.com/tinywasm/router v0.1.14 // indirect
 	github.com/tinywasm/svg v0.1.3 // indirect
 	github.com/tinywasm/time v0.5.0 // indirect
 	github.com/tinywasm/tinygo v0.0.11 // indirect
-	github.com/tinywasm/unixid v0.2.23 // indirect
+	github.com/tinywasm/unixid v0.2.24 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/term v0.44.0 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
