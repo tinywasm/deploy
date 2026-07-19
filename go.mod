@@ -23,7 +23,7 @@ require (
 	github.com/tinywasm/devflow v0.4.46 // indirect
 	github.com/tinywasm/dom v0.11.2 // indirect
 	github.com/tinywasm/fetch v0.1.24 // indirect
-	github.com/tinywasm/fmt v0.25.3 // indirect
+	github.com/tinywasm/fmt v0.25.4 // indirect
 	github.com/tinywasm/gobuild v0.0.26 // indirect
 	github.com/tinywasm/gorun v0.0.24 // indirect
 	github.com/tinywasm/html v0.0.6 // indirect
