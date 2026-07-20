@@ -17,7 +17,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/tdewolff/minify/v2 v2.24.12 // indirect
 	github.com/tdewolff/parse/v2 v2.8.11 // indirect
-	github.com/tinywasm/assetmin v0.4.6 // indirect
+	github.com/tinywasm/assetmin v0.4.13 // indirect
 	github.com/tinywasm/client v0.6.23 // indirect
 	github.com/tinywasm/css v0.1.4 // indirect
 	github.com/tinywasm/devflow v0.4.46 // indirect
@@ -35,6 +35,7 @@ require (
 	github.com/tinywasm/svg v0.1.3 // indirect
 	github.com/tinywasm/time v0.5.0 // indirect
 	github.com/tinywasm/tinygo v0.0.11 // indirect
+	github.com/tinywasm/tui v0.1.1 // indirect
 	github.com/tinywasm/unixid v0.2.24 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/term v0.44.0 // indirect
