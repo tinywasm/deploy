@@ -18,17 +18,17 @@ require (
 	github.com/tdewolff/minify/v2 v2.24.12 // indirect
 	github.com/tdewolff/parse/v2 v2.8.11 // indirect
 	github.com/tinywasm/assetmin v0.4.13 // indirect
-	github.com/tinywasm/client v0.6.23 // indirect
+	github.com/tinywasm/client v0.6.26 // indirect
+	github.com/tinywasm/command v0.0.2 // indirect
 	github.com/tinywasm/css v0.1.4 // indirect
-	github.com/tinywasm/devflow v0.4.46 // indirect
 	github.com/tinywasm/dom v0.11.2 // indirect
 	github.com/tinywasm/fetch v0.1.24 // indirect
 	github.com/tinywasm/fmt v0.25.5 // indirect
 	github.com/tinywasm/gobuild v0.0.26 // indirect
-	github.com/tinywasm/gorun v0.0.24 // indirect
 	github.com/tinywasm/html v0.0.6 // indirect
 	github.com/tinywasm/js v0.0.4 // indirect
 	github.com/tinywasm/json v0.5.11 // indirect
+	github.com/tinywasm/markdown v0.0.2 // indirect
 	github.com/tinywasm/mcp v0.2.0 // indirect
 	github.com/tinywasm/model v0.1.0 // indirect
 	github.com/tinywasm/router v0.1.14 // indirect
@@ -38,6 +38,5 @@ require (
 	github.com/tinywasm/tui v0.1.1 // indirect
 	github.com/tinywasm/unixid v0.2.24 // indirect
 	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/term v0.44.0 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
