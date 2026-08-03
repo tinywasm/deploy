@@ -22,7 +22,7 @@ require (
 	github.com/tinywasm/client v0.6.26 // indirect
 	github.com/tinywasm/command v0.0.2 // indirect
 	github.com/tinywasm/css v0.4.3 // indirect
-	github.com/tinywasm/dom v0.13.0 // indirect
+	github.com/tinywasm/dom v0.13.1 // indirect
 	github.com/tinywasm/fetch v0.1.24 // indirect
 	github.com/tinywasm/fmt v0.25.5 // indirect
 	github.com/tinywasm/gobuild v0.0.26 // indirect
