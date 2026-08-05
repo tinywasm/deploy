@@ -27,7 +27,7 @@ require (
 	github.com/tinywasm/fmt v0.25.5 // indirect
 	github.com/tinywasm/font v0.0.4 // indirect
 	github.com/tinywasm/gobuild v0.0.26 // indirect
-	github.com/tinywasm/html v0.0.6 // indirect
+	github.com/tinywasm/html v0.0.12 // indirect
 	github.com/tinywasm/js v0.0.4 // indirect
 	github.com/tinywasm/json v0.5.17 // indirect
 	github.com/tinywasm/markdown v0.0.2 // indirect
