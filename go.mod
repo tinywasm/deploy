@@ -23,7 +23,7 @@ require (
 	github.com/tinywasm/color v0.1.1 // indirect
 	github.com/tinywasm/command v0.0.2 // indirect
 	github.com/tinywasm/css v0.4.8 // indirect
-	github.com/tinywasm/dom v0.13.3 // indirect
+	github.com/tinywasm/dom v0.13.4 // indirect
 	github.com/tinywasm/fetch v0.1.24 // indirect
 	github.com/tinywasm/fmt v0.25.5 // indirect
 	github.com/tinywasm/font v0.0.4 // indirect
