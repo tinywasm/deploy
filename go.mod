@@ -35,7 +35,7 @@ require (
 	github.com/tinywasm/mcp v0.2.4 // indirect
 	github.com/tinywasm/model v0.1.4 // indirect
 	github.com/tinywasm/router v0.1.14 // indirect
-	github.com/tinywasm/svg v0.1.21 // indirect
+	github.com/tinywasm/svg v0.2.0 // indirect
 	github.com/tinywasm/time v0.5.0 // indirect
 	github.com/tinywasm/tinygo v0.0.11 // indirect
 	github.com/tinywasm/tui v0.1.1 // indirect
