@@ -5,19 +5,19 @@ import (
 
 	twctx "github.com/tinywasm/context"
 	"github.com/tinywasm/deploy"
-	"github.com/zalando/go-keyring"
 )
 
 // TestStrategy_PagesSetup exercises the Cloudflare Pages wizard setup flow.
 // It verifies that wizard steps collect necessary data and attempt the setup API call.
 func TestStrategy_PagesSetup(t *testing.T) {
-	keyring.MockInit()
+	kr := newTestKeyring()
 	baseStore := NewMockStore()
 
 	d := deploy.NewDaemon(&deploy.DaemonConfig{
 		EdgeDir:   "edge",
 		OutputDir: ".build",
 		Store:     baseStore,
+		Keyring:   kr,
 	})
 	p := d.Puller()
 	puller := p.(*deploy.Puller)
@@ -46,7 +46,7 @@ func TestStrategy_PagesSetup(t *testing.T) {
 	}
 
 	// Verify token stored in goflare format (in keyring via SecureStore)
-	token, err := keyring.Get(deploy.KeyringServiceName, "goflare/myproject")
+	token, err := kr.Get("goflare/myproject")
 	if err != nil || token == "" {
 		t.Errorf("expected token stored as goflare/myproject in keyring, got err=%v token=%q", err, token)
 	}

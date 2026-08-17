@@ -4,6 +4,7 @@ package deploy
 
 import (
 	"github.com/tinywasm/deploy/providers/cloudflare"
+	"github.com/tinywasm/keyring"
 	"github.com/tinywasm/wizard"
 )
 
@@ -13,6 +14,10 @@ type DaemonConfig struct {
 	OutputDir        string // relative output dir for compiled artifacts
 	DeployConfigPath string // path to deploy.yaml
 	Store            Store
+	// Keyring holds the secrets. Leave it nil to use this platform's
+	// credential store; tests inject one backed by an in-memory provider so
+	// they never touch the developer's real keyring.
+	Keyring *keyring.Keyring
 }
 
 // Daemon composes the provider handler with the Puller orchestrator.
@@ -25,8 +30,13 @@ type Daemon struct {
 func NewDaemon(cfg *DaemonConfig) *Daemon {
 	provider := cloudflare.New(cfg.EdgeDir, cfg.OutputDir)
 
+	secure := NewSecureStore(cfg.Store)
+	if cfg.Keyring != nil {
+		secure = NewSecureStoreWithKeyring(cfg.Store, cfg.Keyring)
+	}
+
 	puller := &Puller{
-		Store:      NewSecureStore(cfg.Store),
+		Store:      secure,
 		Process:    NewProcessManager(),
 		Downloader: NewDownloader(),
 		Checker:    NewChecker(),

@@ -6,15 +6,14 @@ import (
 
 	twctx "github.com/tinywasm/context"
 	"github.com/tinywasm/deploy"
-	"github.com/zalando/go-keyring"
 )
 
 // TestStrategy_SSHSetup exercises the SSH wizard setup flow
 // ensuring sensitive keys end up in the keyring and NOT the base store.
 func TestStrategy_SSHSetup(t *testing.T) {
-	keyring.MockInit()
+
 	baseStore := NewMockStore()
-	store := deploy.NewSecureStore(baseStore)
+	store, kr := newTestSecureStore(baseStore)
 
 	p := &deploy.Puller{Store: store}
 	steps := p.GetSteps()
@@ -55,12 +54,12 @@ func TestStrategy_SSHSetup(t *testing.T) {
 	// --- Verification of Secure Storage ---
 
 	// 1. Should be in Keyring
-	pat, err := keyring.Get(deploy.KeyringServiceName, "DEPLOY_GITHUB_PAT")
+	pat, err := kr.Get("DEPLOY_GITHUB_PAT")
 	if err != nil || pat != patInput {
 		t.Errorf("expected DEPLOY_GITHUB_PAT in keyring: %q", patInput)
 	}
 
-	key, err := keyring.Get(deploy.KeyringServiceName, "DEPLOY_SSH_KEY")
+	key, err := kr.Get("DEPLOY_SSH_KEY")
 	if err != nil || key != keyPath {
 		t.Errorf("expected DEPLOY_SSH_KEY in keyring: %q", keyPath)
 	}

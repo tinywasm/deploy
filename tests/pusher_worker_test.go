@@ -5,19 +5,19 @@ import (
 
 	twctx "github.com/tinywasm/context"
 	"github.com/tinywasm/deploy"
-	"github.com/zalando/go-keyring"
 )
 
 // TestStrategy_WorkerSetup exercises the Cloudflare Worker wizard setup flow
 // ensuring the API token ends up in the keyring and NOT the base store.
 func TestStrategy_WorkerSetup(t *testing.T) {
-	keyring.MockInit()
+	kr := newTestKeyring()
 	baseStore := NewMockStore()
 
 	d := deploy.NewDaemon(&deploy.DaemonConfig{
 		EdgeDir:   "edge",
 		OutputDir: ".build",
 		Store:     baseStore,
+		Keyring:   kr,
 	})
 	p := d.Puller()
 	puller := p.(*deploy.Puller)
@@ -49,7 +49,7 @@ func TestStrategy_WorkerSetup(t *testing.T) {
 	// --- Verification of Secure Storage ---
 
 	// 1. Should be in Keyring
-	val, err := keyring.Get(deploy.KeyringServiceName, "goflare/myproject")
+	val, err := kr.Get("goflare/myproject")
 	if err != nil || val != tokenInput {
 		t.Errorf("expected goflare/myproject in keyring, got err=%v", err)
 	}

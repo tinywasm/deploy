@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zalando/go-keyring"
+	"github.com/tinywasm/keyring"
+	"github.com/tinywasm/keyring/auto"
 )
 
 // Store is a flat key-value store for deploy configuration and secrets.
@@ -22,6 +23,7 @@ import (
 //	CF_PAGES_TOKEN      → Cloudflare scoped Pages:Edit token (auto-created)
 //	CF_PROJECT          → Cloudflare project name
 //	CF_WORKER_TOKEN     → Cloudflare scoped Workers:Edit token
+//
 // KeyringServiceName is the service name used for storing secrets in the OS keyring.
 const KeyringServiceName = "tinywasm-deploy"
 
@@ -43,17 +45,26 @@ func isSensitive(key string) bool {
 // Minimal interface: no adapter needed for the base KVStore.
 type SecureStore struct {
 	base Store
+	kr   *keyring.Keyring
 }
 
-// NewSecureStore initializes a new SecureStore wrapping the given base store.
+// NewSecureStore initializes a SecureStore wrapping base, backed by whichever
+// credential store this platform provides.
 func NewSecureStore(base Store) *SecureStore {
-	return &SecureStore{base: base}
+	return NewSecureStoreWithKeyring(base, auto.OpenKeyring(KeyringServiceName))
+}
+
+// NewSecureStoreWithKeyring initializes a SecureStore over an injected keyring.
+// Tests pass one backed by an in-memory provider so nothing touches the real
+// credential store, and so they can run in parallel.
+func NewSecureStoreWithKeyring(base Store, kr *keyring.Keyring) *SecureStore {
+	return &SecureStore{base: base, kr: kr}
 }
 
 // Get retrieves a key. Sensitive keys are fetched only from the keyring.
 func (s *SecureStore) Get(key string) (string, error) {
 	if isSensitive(key) {
-		val, err := keyring.Get(KeyringServiceName, key)
+		val, err := s.kr.Get(key)
 		if err != nil {
 			return "", fmt.Errorf("secure store: key %q not found in keyring: %w", key, err)
 		}
@@ -67,9 +78,9 @@ func (s *SecureStore) Get(key string) (string, error) {
 func (s *SecureStore) Set(key, value string) error {
 	if isSensitive(key) {
 		if value == "" {
-			return keyring.Delete(KeyringServiceName, key)
+			return s.kr.Delete(key)
 		}
-		if err := keyring.Set(KeyringServiceName, key, value); err != nil {
+		if err := s.kr.Set(key, value); err != nil {
 			return fmt.Errorf("secure store: failed to save %q to keyring: %w", key, err)
 		}
 		// Wipe from base store if it existed previously

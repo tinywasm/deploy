@@ -27,4 +27,6 @@ func (s *CloudflareWorkerPusher) Run(cfg *Config, p *Puller) error {
 	}
 	return nil
 }
-func (s *CloudflareWorkerPusher) WizardSteps(store Store, log func(...any)) []*wizard.Step { return nil }
+func (s *CloudflareWorkerPusher) WizardSteps(store Store, log func(...any)) []*wizard.Step {
+	return nil
+}

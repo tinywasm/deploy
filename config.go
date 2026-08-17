@@ -17,11 +17,11 @@ type Config struct {
 
 // ConfigUpdater holds updater-specific configuration.
 type ConfigUpdater struct {
-	Port     int           `yaml:"port"` // default: 8080
-	LogLevel string        `yaml:"log_level"`
-	LogFile  string        `yaml:"log_file"`
-	TempDir  string        `yaml:"temp_dir"`
-	Retry    RetryConfig   `yaml:"retry"`
+	Port     int         `yaml:"port"` // default: 8080
+	LogLevel string      `yaml:"log_level"`
+	LogFile  string      `yaml:"log_file"`
+	TempDir  string      `yaml:"temp_dir"`
+	Retry    RetryConfig `yaml:"retry"`
 }
 
 // RetryConfig holds retry configuration.

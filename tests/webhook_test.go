@@ -6,15 +6,14 @@ import (
 
 	twctx "github.com/tinywasm/context"
 	"github.com/tinywasm/deploy"
-	"github.com/zalando/go-keyring"
 )
 
 // TestStrategy_WebhookSetup exercises the webhook setup flow
 // ensuring sensitive keys end up in the keyring and NOT the base store.
 func TestStrategy_WebhookSetup(t *testing.T) {
-	keyring.MockInit()
+
 	baseStore := NewMockStore()
-	store := deploy.NewSecureStore(baseStore)
+	store, kr := newTestSecureStore(baseStore)
 
 	p := &deploy.Puller{
 		Store: store,
@@ -61,12 +60,12 @@ func TestStrategy_WebhookSetup(t *testing.T) {
 	// --- Verification of Secure Storage ---
 
 	// 1. Should be in Keyring
-	pat, err := keyring.Get(deploy.KeyringServiceName, "DEPLOY_GITHUB_PAT")
+	pat, err := kr.Get("DEPLOY_GITHUB_PAT")
 	if err != nil || pat != patInput {
 		t.Errorf("expected DEPLOY_GITHUB_PAT in keyring: %q, got error: %v", patInput, err)
 	}
 
-	hmac, err := keyring.Get(deploy.KeyringServiceName, "DEPLOY_HMAC_SECRET")
+	hmac, err := kr.Get("DEPLOY_HMAC_SECRET")
 	if err != nil || hmac != hmacInput {
 		t.Errorf("expected DEPLOY_HMAC_SECRET in keyring: %q, got error: %v", hmacInput, err)
 	}
