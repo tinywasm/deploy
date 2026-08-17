@@ -64,8 +64,8 @@ github.com/tinywasm/unixid v0.2.24 h1:D5ufep5H8Ji/G6M2Y+Gf/z2ZcnlrPpn50RoDER7b4e
 github.com/tinywasm/unixid v0.2.24/go.mod h1:ewc484oiQQYOgFqW2RLlCHJVngY5NoP+maZ6pzbF+K0=
 github.com/tinywasm/update v0.0.2 h1:S+1aC3juzQAdH7sLAqFUR9T7AGiFX+ywRtDOO++u2Ik=
 github.com/tinywasm/update v0.0.2/go.mod h1:PrBnJuqbSs1xQzGV9pmw2qoI1zuRJON2oAYIV1eKYCg=
-github.com/tinywasm/webauthn v0.1.0 h1:0Qve++rG9bvxqpxgkiffikCcv+ALd9j0jxu79+j5alA=
-github.com/tinywasm/webauthn v0.1.0/go.mod h1:A/yVYXoWxjwtvnEu6Dq/HoHDAaehy9tnPlUs8Iyask8=
+github.com/tinywasm/webauthn v0.1.1 h1:lbbXbue7c+tiX+wGKf985uEuOVS8L6qjOSszLqYolLI=
+github.com/tinywasm/webauthn v0.1.1/go.mod h1:A/yVYXoWxjwtvnEu6Dq/HoHDAaehy9tnPlUs8Iyask8=
 github.com/tinywasm/wizard v0.0.23 h1:hVio9ifAaR7Mu3wxwHoT9eZw9WPB2cRJEVD2foXx6Yw=
 github.com/tinywasm/wizard v0.0.23/go.mod h1:tGkT9PRSfeKRZ8cQeVw9jECkK+wRx5vg//o0751dqmE=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=

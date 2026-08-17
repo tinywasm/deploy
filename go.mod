@@ -40,6 +40,6 @@ require (
 	github.com/tinywasm/tinygo v0.0.11 // indirect
 	github.com/tinywasm/tui v0.1.1 // indirect
 	github.com/tinywasm/unixid v0.2.24 // indirect
-	github.com/tinywasm/webauthn v0.1.0 // indirect
+	github.com/tinywasm/webauthn v0.1.1 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
