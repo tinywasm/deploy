@@ -25,7 +25,7 @@ require (
 	github.com/tinywasm/dbus v0.1.0 // indirect
 	github.com/tinywasm/dom v0.13.5 // indirect
 	github.com/tinywasm/fetch v0.1.24 // indirect
-	github.com/tinywasm/fmt v0.25.5 // indirect
+	github.com/tinywasm/fmt v0.25.6 // indirect
 	github.com/tinywasm/font v0.0.4 // indirect
 	github.com/tinywasm/gobuild v0.0.26 // indirect
 	github.com/tinywasm/html v0.0.17 // indirect
