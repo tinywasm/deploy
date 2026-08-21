@@ -32,7 +32,7 @@ require (
 	github.com/tinywasm/json v0.5.17 // indirect
 	github.com/tinywasm/model v0.1.4 // indirect
 	github.com/tinywasm/modfind v0.0.4 // indirect
-	github.com/tinywasm/sitec v0.1.10 // indirect
+	github.com/tinywasm/sitec v0.2.0 // indirect
 	github.com/tinywasm/svg v0.3.0 // indirect
 	github.com/tinywasm/tinygo v0.0.11 // indirect
 	github.com/tinywasm/webauthn v0.1.1 // indirect
