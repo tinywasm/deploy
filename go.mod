@@ -18,7 +18,7 @@ require (
 	github.com/tdewolff/minify/v2 v2.24.12 // indirect
 	github.com/tdewolff/parse/v2 v2.8.11 // indirect
 	github.com/tinywasm/await v0.1.0 // indirect
-	github.com/tinywasm/base64 v0.0.4 // indirect
+	github.com/tinywasm/base64 v0.0.5 // indirect
 	github.com/tinywasm/color v0.1.1 // indirect
 	github.com/tinywasm/css v0.4.15 // indirect
 	github.com/tinywasm/dbus v0.1.0 // indirect
