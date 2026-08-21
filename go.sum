@@ -48,8 +48,8 @@ github.com/tinywasm/modfind v0.0.4 h1:g7EFZArEftll9pxg5VAToIltVnEMRWfE+KEjPJpsNg
 github.com/tinywasm/modfind v0.0.4/go.mod h1:g1ZkkxCZ7vwDI5O23AMWlPJy4ctRWfWKZX/y+KMH1FM=
 github.com/tinywasm/sitec v0.1.10 h1:IHFgycsV4O6lZyu2z93CyyM77Jf84h8Gj2bXLoKb8nk=
 github.com/tinywasm/sitec v0.1.10/go.mod h1:k8C2DXkkeDYryi7+0SQlAlWEVmhDzs1eNWWDCp4Wlew=
-github.com/tinywasm/svg v0.2.0 h1:1oh6T4KxFcBRe79VTXKxc1kgCVh60sU0nuzJz+icYo0=
-github.com/tinywasm/svg v0.2.0/go.mod h1:2o5Z8LsbCT6ltV0nKPtmZFusYqHi8AUGnk7jDQ6xj+I=
+github.com/tinywasm/svg v0.3.0 h1:9UbQynNnV6ix5yzfFO+gknYGSgvLJVlW6E/JNQ9ljFw=
+github.com/tinywasm/svg v0.3.0/go.mod h1:hzq6bL+1AdSgE01nVOdHY2ATaI7fxDC3Ztt3Iw0p0sA=
 github.com/tinywasm/tinygo v0.0.11 h1:mdSPat9PcIcT1ZW6y+7DJmAbne2vLHVpTHqTCRL/L/A=
 github.com/tinywasm/tinygo v0.0.11/go.mod h1:AFP4RTqJN9HKR/AWwXSibOF0HwlHIIpBNP0KWO2nvCU=
 github.com/tinywasm/update v0.0.2 h1:S+1aC3juzQAdH7sLAqFUR9T7AGiFX+ywRtDOO++u2Ik=
