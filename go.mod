@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/tinywasm/context v0.0.18
-	github.com/tinywasm/goflare v0.5.0
+	github.com/tinywasm/goflare v0.5.5
 	github.com/tinywasm/keyring v0.2.0
 	github.com/tinywasm/update v0.0.2
 	github.com/tinywasm/wizard v0.0.23
