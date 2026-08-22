@@ -29,10 +29,10 @@ require (
 	github.com/tinywasm/html v0.0.17 // indirect
 	github.com/tinywasm/image v0.1.0 // indirect
 	github.com/tinywasm/js v0.0.4 // indirect
-	github.com/tinywasm/json v0.5.21 // indirect
+	github.com/tinywasm/json v0.5.23 // indirect
 	github.com/tinywasm/model v0.1.4 // indirect
 	github.com/tinywasm/modfind v0.0.4 // indirect
-	github.com/tinywasm/sitec v0.2.1 // indirect
+	github.com/tinywasm/sitec v0.2.4 // indirect
 	github.com/tinywasm/svg v0.3.0 // indirect
 	github.com/tinywasm/tinygo v0.0.11 // indirect
 	github.com/tinywasm/webauthn v0.1.1 // indirect
