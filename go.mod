@@ -34,7 +34,7 @@ require (
 	github.com/tinywasm/modfind v0.0.4 // indirect
 	github.com/tinywasm/sitec v0.2.4 // indirect
 	github.com/tinywasm/svg v0.3.0 // indirect
-	github.com/tinywasm/tinygo v0.0.11 // indirect
+	github.com/tinywasm/tinygo v1.0.0 // indirect
 	github.com/tinywasm/webauthn v0.1.1 // indirect
 	golang.org/x/image v0.45.0 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
