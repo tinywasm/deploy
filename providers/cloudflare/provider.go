@@ -38,12 +38,8 @@ func (p *Provider) Deploy(store interface {
 		p.gf.Config.ProjectName = project
 	}
 
-	// Determine if we should use DeployWorker or DeployPages based on DEPLOY_METHOD.
-	// Defaults to DeployPages (goflare v0.1.0's main entry point).
-	method, _ := store.Get("DEPLOY_METHOD")
-	if method == "cloudflareWorker" {
-		return p.gf.DeployWorker()
-	}
+	// In goflare v0.5.13 Deploy is unified (Worker with assets).
+	// DeployWorker/DeployPages no longer exist as separate methods.
 	return p.gf.Deploy()
 }
 
