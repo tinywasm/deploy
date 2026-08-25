@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/tinywasm/context v0.0.22
-	github.com/tinywasm/goflare v0.5.13
+	github.com/tinywasm/goflare v0.5.14
 	github.com/tinywasm/keyring v0.2.2
 	github.com/tinywasm/update v0.0.2
 	github.com/tinywasm/wizard v0.0.27
@@ -14,7 +14,6 @@ require (
 require (
 	github.com/HugoSmits86/nativewebp v1.3.0 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
-	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/tdewolff/minify/v2 v2.24.17 // indirect
 	github.com/tdewolff/parse/v2 v2.8.16 // indirect
 	github.com/tinywasm/await v0.1.0 // indirect
@@ -37,6 +36,4 @@ require (
 	github.com/tinywasm/tinygo v1.0.0 // indirect
 	github.com/tinywasm/webauthn v0.1.2 // indirect
 	golang.org/x/image v0.45.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	lukechampine.com/blake3 v1.4.1 // indirect
 )
