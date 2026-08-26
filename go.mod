@@ -18,7 +18,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.8.16 // indirect
 	github.com/tinywasm/await v0.1.0 // indirect
 	github.com/tinywasm/base64 v0.0.5 // indirect
-	github.com/tinywasm/cloudflare v0.0.10 // indirect
+	github.com/tinywasm/cloudflare v0.0.11 // indirect
 	github.com/tinywasm/color v0.1.1 // indirect
 	github.com/tinywasm/css v0.4.17 // indirect
 	github.com/tinywasm/dbus v0.1.0 // indirect
