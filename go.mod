@@ -28,7 +28,7 @@ require (
 	github.com/tinywasm/fetch v0.1.27 // indirect
 	github.com/tinywasm/fmt v0.25.7 // indirect
 	github.com/tinywasm/font v0.0.4 // indirect
-	github.com/tinywasm/git v0.0.6 // indirect
+	github.com/tinywasm/git v0.0.7 // indirect
 	github.com/tinywasm/gobuild v0.0.27 // indirect
 	github.com/tinywasm/html v0.0.18 // indirect
 	github.com/tinywasm/image v0.1.0 // indirect
