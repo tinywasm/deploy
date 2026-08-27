@@ -7,7 +7,7 @@ require (
 	github.com/tinywasm/goflare v0.5.26
 	github.com/tinywasm/keyring v0.2.2
 	github.com/tinywasm/update v0.0.2
-	github.com/tinywasm/wizard v0.0.27
+	github.com/tinywasm/wizard v0.0.28
 	gopkg.in/yaml.v3 v3.0.1
 )
 
