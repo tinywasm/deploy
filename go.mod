@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/tinywasm/context v0.0.22
-	github.com/tinywasm/goflare v0.5.26
+	github.com/tinywasm/goflare v0.5.28
 	github.com/tinywasm/keyring v0.2.3
 	github.com/tinywasm/update v0.0.2
 	github.com/tinywasm/wizard v0.0.28
@@ -28,6 +28,7 @@ require (
 	github.com/tinywasm/fetch v0.1.27 // indirect
 	github.com/tinywasm/fmt v0.25.7 // indirect
 	github.com/tinywasm/font v0.0.4 // indirect
+	github.com/tinywasm/ghaction v0.1.1 // indirect
 	github.com/tinywasm/git v0.0.7 // indirect
 	github.com/tinywasm/gobuild v0.0.27 // indirect
 	github.com/tinywasm/html v0.0.18 // indirect
