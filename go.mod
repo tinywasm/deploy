@@ -21,7 +21,7 @@ require (
 	github.com/tinywasm/cloudflare v0.0.12 // indirect
 	github.com/tinywasm/color v0.1.1 // indirect
 	github.com/tinywasm/command v0.0.2 // indirect
-	github.com/tinywasm/css v0.4.17 // indirect
+	github.com/tinywasm/css v0.4.19 // indirect
 	github.com/tinywasm/dbus v0.1.0 // indirect
 	github.com/tinywasm/ddl v0.0.12 // indirect
 	github.com/tinywasm/dom v0.13.6 // indirect

@@ -20,8 +20,8 @@ github.com/tinywasm/command v0.0.2 h1:VDeUUghEatrK4bMgv3MJlswpVZMybvxwB5YTyisfp7
 github.com/tinywasm/command v0.0.2/go.mod h1:biTSjIwxhPoOoyZ7iR8qt59qW1FD5QHCYfsLPlWYwkA=
 github.com/tinywasm/context v0.0.22 h1:5tS1WL18BToC8HUTk2bkn4utxngZoleryHCQNCgaQG8=
 github.com/tinywasm/context v0.0.22/go.mod h1:C3Movx3XwRmeCDZ2Z1kckNEGSoLCLMgLSEHlf0HCW2U=
-github.com/tinywasm/css v0.4.17 h1:E22pPbNpsfqXK2fzZqR/x/bzZJz/A70xkNuCW+te5Sw=
-github.com/tinywasm/css v0.4.17/go.mod h1:go9Dj+OdNdIMa3B0rSy9OQ8TghqazmQDBvSZD3iDZ4I=
+github.com/tinywasm/css v0.4.19 h1:VSlOi+rB3OCBOEnqiFhiR4uCri4I1zGdgYYrlRWOTlc=
+github.com/tinywasm/css v0.4.19/go.mod h1:go9Dj+OdNdIMa3B0rSy9OQ8TghqazmQDBvSZD3iDZ4I=
 github.com/tinywasm/dbus v0.1.0 h1:KzAt6DHt+YT/lx05Kh4JLmkZdgasdIU+7n6bX9xDKAY=
 github.com/tinywasm/dbus v0.1.0/go.mod h1:anuRR8oZZZinRsh/vP0taxQgpPBKQkTxmp84VmUxJmE=
 github.com/tinywasm/ddl v0.0.12 h1:vIX4BdWyxgX9rxzXONerFjf9es60S+pqbFFc0yiMJQ8=
