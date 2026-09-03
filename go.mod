@@ -24,7 +24,7 @@ require (
 	github.com/tinywasm/css v0.4.19 // indirect
 	github.com/tinywasm/dbus v0.1.0 // indirect
 	github.com/tinywasm/ddl v0.0.12 // indirect
-	github.com/tinywasm/dom v0.13.6 // indirect
+	github.com/tinywasm/dom v0.13.7 // indirect
 	github.com/tinywasm/fetch v0.1.27 // indirect
 	github.com/tinywasm/fmt v0.25.7 // indirect
 	github.com/tinywasm/font v0.0.4 // indirect
