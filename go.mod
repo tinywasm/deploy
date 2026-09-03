@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/tinywasm/context v0.0.22
-	github.com/tinywasm/goflare v0.5.28
+	github.com/tinywasm/goflare v0.5.29
 	github.com/tinywasm/keyring v0.2.3
 	github.com/tinywasm/update v0.0.2
 	github.com/tinywasm/wizard v0.0.28
@@ -18,7 +18,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.8.16 // indirect
 	github.com/tinywasm/await v0.1.0 // indirect
 	github.com/tinywasm/base64 v0.0.5 // indirect
-	github.com/tinywasm/cloudflare v0.0.12 // indirect
+	github.com/tinywasm/cloudflare v0.0.16 // indirect
 	github.com/tinywasm/color v0.1.1 // indirect
 	github.com/tinywasm/command v0.0.2 // indirect
 	github.com/tinywasm/css v0.4.20 // indirect
