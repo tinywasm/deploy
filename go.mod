@@ -24,14 +24,14 @@ require (
 	github.com/tinywasm/css v0.4.19 // indirect
 	github.com/tinywasm/dbus v0.1.0 // indirect
 	github.com/tinywasm/ddl v0.0.12 // indirect
-	github.com/tinywasm/dom v0.13.7 // indirect
+	github.com/tinywasm/dom v0.13.8 // indirect
 	github.com/tinywasm/fetch v0.1.27 // indirect
 	github.com/tinywasm/fmt v0.25.7 // indirect
 	github.com/tinywasm/font v0.0.4 // indirect
 	github.com/tinywasm/ghaction v0.1.1 // indirect
 	github.com/tinywasm/git v0.0.7 // indirect
 	github.com/tinywasm/gobuild v0.0.27 // indirect
-	github.com/tinywasm/html v0.0.18 // indirect
+	github.com/tinywasm/html v0.0.19 // indirect
 	github.com/tinywasm/image v0.1.0 // indirect
 	github.com/tinywasm/js v0.0.9 // indirect
 	github.com/tinywasm/json v0.5.23 // indirect
