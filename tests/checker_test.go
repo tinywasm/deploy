@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/tinywasm/deploy"
+	"webtyp.com/deploy"
 )
 
 func TestCheck_Healthy(t *testing.T) {

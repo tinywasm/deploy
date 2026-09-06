@@ -7,16 +7,16 @@
 
 ## Goal
 
-One package owns *deployment* as a concept: `tinywasm/deploy`. It holds the **logic**
+One package owns *deployment* as a concept: `webtyp/deploy`. It holds the **logic**
 (what a deployment is, its lifecycle, its wizard, its health checks) and **not** the
 knowledge of any particular target. The concrete **executor** is *injected at mount
 time* by the host.
 
-`tinywasm/app` mounts whichever executors are available, so a developer — or an LLM
+`webtyp/app` mounts whichever executors are available, so a developer — or an LLM
 through MCP — can list them and pick one:
 
 ```
-tinywasm deploy --list
+webtyp deploy --list
   localServer   deploy to a server you administer (puller agent, health check, rollback)
   cloudflare    deploy to Cloudflare (Pages Functions / Worker artifacts)
 ```
@@ -68,7 +68,7 @@ dependency injection:
    `init()`-based self-registration. The host wires the set explicitly:
 
    ```go
-   // in tinywasm/app
+   // in webtyp/app
    deploy.Register(localserver.New())  // deploy's own subpackage
    deploy.Register(goflare.Executor()) // injected from outside — deploy never imports goflare
    ```
@@ -101,4 +101,4 @@ Cloudflare executor is extracted *from* `goflare/cloudflare.go`, so it should be
 once, after goflare's own restructuring, rather than moved twice. The immediate work is
 `goflare` + `goflare-demo` (D1, router, file uploads):
 
-https://github.com/tinywasm/goflare/blob/main/docs/PLAN.md
+https://github.com/webtyp/goflare/blob/main/docs/PLAN.md

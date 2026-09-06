@@ -63,7 +63,7 @@ See interfaces in [puller.go](../puller.go) and [downloader.go](../downloader.go
 
 **Implementation Strategy:**
 - **Production (`cmd/puller/main.go`)**: 
-    - Inject `keyring.New()` from `tinywasm/keyring`.
+    - Inject `keyring.New()` from `webtyp/keyring`.
     - Inject real `NewProcessManager()` (Windows specific).
     - Inject real `NewDownloader()` (net/http).
 - **Testing**: 

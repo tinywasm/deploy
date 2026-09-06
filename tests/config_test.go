@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tinywasm/deploy"
+	"webtyp.com/deploy"
 )
 
 func TestLoad_Success(t *testing.T) {

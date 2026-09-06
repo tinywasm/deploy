@@ -1,9 +1,9 @@
 package deploy_test
 
 import (
-	"github.com/tinywasm/deploy"
-	"github.com/tinywasm/keyring"
-	keyringtests "github.com/tinywasm/keyring/tests"
+	"webtyp.com/deploy"
+	"webtyp.com/keyring"
+	keyringtests "webtyp.com/keyring/tests"
 )
 
 // newTestKeyring returns a keyring backed by an in-memory provider, scoped to

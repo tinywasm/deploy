@@ -32,7 +32,7 @@ flowchart TD
     MATCH1 -->|No| ERR2[❌ No coinciden<br/>Reintentar]
     ERR2 --> INPUT1
     
-    MATCH1 -->|Sí| SAVE1[Guardar via tinywasm/keyring:<br/>Service: updater-cicd<br/>Key: hmac-secret]
+    MATCH1 -->|Sí| SAVE1[Guardar via webtyp/keyring:<br/>Service: updater-cicd<br/>Key: hmac-secret]
     
     SAVE1 --> CHECK_SAVE1{Guardado<br/>exitoso?}
     CHECK_SAVE1 -->|No| ERR3[❌ Error acceso Keyring<br/>Verificar permisos usuario]
@@ -61,7 +61,7 @@ flowchart TD
     RETRY2 -->|Sí| INPUT2
     RETRY2 -->|No| SKIP_PAT[⚠️ Continuar sin PAT<br/>Solo repos públicos]
     
-    TEST_RESULT -->|Sí| SAVE2[Guardar via tinywasm/keyring:<br/>Service: updater-cicd<br/>Key: github-pat]
+    TEST_RESULT -->|Sí| SAVE2[Guardar via webtyp/keyring:<br/>Service: updater-cicd<br/>Key: github-pat]
     SKIP_PAT --> STEP3
     
     SAVE2 --> SUCCESS2[✓ GitHub PAT almacenado]

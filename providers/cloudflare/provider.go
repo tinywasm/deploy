@@ -3,9 +3,9 @@ package cloudflare
 import (
 	"fmt"
 
-	twctx "github.com/tinywasm/context"
-	"github.com/tinywasm/goflare"
-	"github.com/tinywasm/wizard"
+	twctx "webtyp.com/context"
+	"webtyp.com/goflare"
+	"webtyp.com/wizard"
 )
 
 

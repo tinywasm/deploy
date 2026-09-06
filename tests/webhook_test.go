@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	twctx "github.com/tinywasm/context"
-	"github.com/tinywasm/deploy"
+	twctx "webtyp.com/context"
+	"webtyp.com/deploy"
 )
 
 // TestStrategy_WebhookSetup exercises the webhook setup flow

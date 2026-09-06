@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tinywasm/keyring"
-	"github.com/tinywasm/keyring/auto"
+	"webtyp.com/keyring"
+	"webtyp.com/keyring/auto"
 )
 
 // Store is a flat key-value store for deploy configuration and secrets.
@@ -25,7 +25,7 @@ import (
 //	CF_WORKER_TOKEN     → Cloudflare scoped Workers:Edit token
 //
 // KeyringServiceName is the service name used for storing secrets in the OS keyring.
-const KeyringServiceName = "tinywasm-deploy"
+const KeyringServiceName = "webtyp-deploy"
 
 var sensitiveKeys = map[string]bool{
 	"DEPLOY_GITHUB_PAT":  true,

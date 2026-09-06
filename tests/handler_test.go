@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tinywasm/deploy"
+	"webtyp.com/deploy"
 )
 
 func TestHandleUpdate_Success(t *testing.T) {

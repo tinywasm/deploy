@@ -38,7 +38,7 @@ type Provider interface {
 ```
 
 ### Supported Providers
-1.  **Cloudflare**: Implemented via `providers/cloudflare`, wrapping `github.com/tinywasm/goflare`. Supports both Cloudflare Pages and Workers.
+1.  **Cloudflare**: Implemented via `providers/cloudflare`, wrapping `webtyp.com/goflare`. Supports both Cloudflare Pages and Workers.
 2.  **Webhooks & SSH**: Legacy strategies supported through the `Pusher` registry for backward compatibility.
 
 ---
@@ -53,7 +53,7 @@ The architecture leverages existing Windows capabilities (Startup Folder, Task S
 
 [Process Flow](./diagrams/PROCESS_FLOW.md)
 
-Atomic binary replacement (backup, swap, and rollback) is delegated to the [`github.com/tinywasm/update`](https://github.com/tinywasm/update) package. The `deploy` agent orchestrates the download, process lifecycle, and health verification, while the low-level file operations are handled by the external dependency.
+Atomic binary replacement (backup, swap, and rollback) is delegated to the [`webtyp.com/update`](https://github.com/webtyp/update) package. The `deploy` agent orchestrates the download, process lifecycle, and health verification, while the low-level file operations are handled by the external dependency.
 
 ---
 
@@ -245,7 +245,7 @@ Refer to [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md#83-windows-management
 Since the applications are started via the Windows Startup Folder, consistent filenames are critical. 
 
 *   **Constraint**: The executable pointed to by the shortcut (e.g., `myapp-service.exe`) must **always** exist.
-*   **Solution**: The updater performs an atomic swap strategy (delegated to `github.com/tinywasm/update`). This ensures that if the server reboots, the Startup Folder shortcut will always launch the latest healthy deployed version.
+*   **Solution**: The updater performs an atomic swap strategy (delegated to `webtyp.com/update`). This ensures that if the server reboots, the Startup Folder shortcut will always launch the latest healthy deployed version.
 
 ### Process Management Implementation
 The updater uses `taskkill` for termination and `CREATE_NEW_PROCESS_GROUP` for decoupled execution. 

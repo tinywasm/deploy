@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tinywasm/deploy"
+	"webtyp.com/deploy"
 )
 
 func TestDownload_Success(t *testing.T) {

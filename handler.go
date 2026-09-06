@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/tinywasm/update"
+	"webtyp.com/update"
 	"gopkg.in/yaml.v3"
 )
 

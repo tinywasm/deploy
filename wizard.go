@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tinywasm/context"
-	"github.com/tinywasm/wizard"
+	"webtyp.com/context"
+	"webtyp.com/wizard"
 )
 
 const (
@@ -21,7 +21,7 @@ const (
 	ctxCFToken    = "CF_BOOTSTRAP_TOKEN"
 )
 
-// GetSteps implements the interface expected by tinywasm/wizard.New().
+// GetSteps implements the interface expected by webtyp/wizard.New().
 // Returns the initial steps; method-specific steps are injected dynamically
 // via the Step 1 OnInputFn after the user chooses a deploy method.
 func (p *Puller) GetSteps() []*wizard.Step {

@@ -1,6 +1,6 @@
 package deploy
 
-import "github.com/tinywasm/wizard"
+import "webtyp.com/wizard"
 
 func init() {
 	RegisterPusher(&CloudflarePagesPusher{})

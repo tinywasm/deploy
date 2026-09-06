@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tinywasm/deploy"
+	"webtyp.com/deploy"
 	"gopkg.in/yaml.v3"
 )
 

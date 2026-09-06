@@ -1,14 +1,14 @@
-module github.com/tinywasm/deploy
+module webtyp.com/deploy
 
 go 1.25.2
 
 require (
-	github.com/tinywasm/context v0.0.22
-	github.com/tinywasm/goflare v0.5.29
-	github.com/tinywasm/keyring v0.2.3
-	github.com/tinywasm/update v0.0.2
-	github.com/tinywasm/wizard v0.0.28
 	gopkg.in/yaml.v3 v3.0.1
+	webtyp.com/context v0.0.22
+	webtyp.com/goflare v0.5.29
+	webtyp.com/keyring v0.2.3
+	webtyp.com/update v0.0.2
+	webtyp.com/wizard v0.0.28
 )
 
 require (
@@ -16,33 +16,33 @@ require (
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/tdewolff/minify/v2 v2.24.17 // indirect
 	github.com/tdewolff/parse/v2 v2.8.16 // indirect
-	github.com/tinywasm/await v0.1.0 // indirect
-	github.com/tinywasm/base64 v0.0.5 // indirect
-	github.com/tinywasm/cloudflare v0.0.16 // indirect
-	github.com/tinywasm/color v0.1.1 // indirect
-	github.com/tinywasm/command v0.0.2 // indirect
-	github.com/tinywasm/css v0.4.20 // indirect
-	github.com/tinywasm/dbus v0.1.0 // indirect
-	github.com/tinywasm/ddl v0.0.12 // indirect
-	github.com/tinywasm/dom v0.13.9 // indirect
-	github.com/tinywasm/fetch v0.1.27 // indirect
-	github.com/tinywasm/fmt v0.25.7 // indirect
-	github.com/tinywasm/font v0.0.4 // indirect
-	github.com/tinywasm/ghaction v0.1.1 // indirect
-	github.com/tinywasm/git v0.0.7 // indirect
-	github.com/tinywasm/gobuild v0.0.27 // indirect
-	github.com/tinywasm/html v0.0.19 // indirect
-	github.com/tinywasm/image v0.1.0 // indirect
-	github.com/tinywasm/js v0.0.9 // indirect
-	github.com/tinywasm/json v0.5.23 // indirect
-	github.com/tinywasm/model v0.1.7 // indirect
-	github.com/tinywasm/modfind v0.0.8 // indirect
-	github.com/tinywasm/sitec v0.2.7 // indirect
-	github.com/tinywasm/storage v0.0.6 // indirect
-	github.com/tinywasm/svg v0.3.2 // indirect
-	github.com/tinywasm/tinygo v1.0.0 // indirect
-	github.com/tinywasm/webauthn v0.1.2 // indirect
 	golang.org/x/image v0.45.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
+	webtyp.com/await v0.1.0 // indirect
+	webtyp.com/base64 v0.0.5 // indirect
+	webtyp.com/cloudflare v0.0.16 // indirect
+	webtyp.com/color v0.1.1 // indirect
+	webtyp.com/command v0.0.2 // indirect
+	webtyp.com/css v0.4.20 // indirect
+	webtyp.com/dbus v0.1.0 // indirect
+	webtyp.com/ddl v0.0.12 // indirect
+	webtyp.com/dom v0.13.9 // indirect
+	webtyp.com/fetch v0.1.27 // indirect
+	webtyp.com/fmt v0.25.7 // indirect
+	webtyp.com/font v0.0.4 // indirect
+	webtyp.com/ghaction v0.1.1 // indirect
+	webtyp.com/git v0.0.7 // indirect
+	webtyp.com/gobuild v0.0.27 // indirect
+	webtyp.com/html v0.0.19 // indirect
+	webtyp.com/image v0.1.0 // indirect
+	webtyp.com/js v0.0.9 // indirect
+	webtyp.com/json v0.5.23 // indirect
+	webtyp.com/model v0.1.7 // indirect
+	webtyp.com/modfind v0.0.8 // indirect
+	webtyp.com/sitec v0.2.7 // indirect
+	webtyp.com/storage v0.0.6 // indirect
+	webtyp.com/svg v0.3.2 // indirect
+	webtyp.com/tinygo v1.0.0 // indirect
+	webtyp.com/webauthn v0.1.2 // indirect
 )

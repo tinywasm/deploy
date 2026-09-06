@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tinywasm/deploy"
+	"webtyp.com/deploy"
 )
 
 // envStore reads deploy config from environment variables.

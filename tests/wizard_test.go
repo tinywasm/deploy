@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	twctx "github.com/tinywasm/context"
-	"github.com/tinywasm/deploy"
+	twctx "webtyp.com/context"
+	"webtyp.com/deploy"
 )
 
 // TestWizard_WebhookFlow exercises the full webhook wizard step sequence.

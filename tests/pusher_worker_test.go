@@ -3,8 +3,8 @@ package deploy_test
 import (
 	"testing"
 
-	twctx "github.com/tinywasm/context"
-	"github.com/tinywasm/deploy"
+	twctx "webtyp.com/context"
+	"webtyp.com/deploy"
 )
 
 // TestStrategy_WorkerSetup exercises the Cloudflare Worker wizard setup flow

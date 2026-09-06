@@ -27,7 +27,7 @@ type Puller struct {
 	log        func(...any)
 }
 
-// SetLog injects a logger (called by tinywasm/app after registration with TUI).
+// SetLog injects a logger (called by webtyp/app after registration with TUI).
 func (p *Puller) SetLog(f func(...any)) { p.log = f }
 
 func (p *Puller) logger(msgs ...any) {

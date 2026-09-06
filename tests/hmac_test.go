@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/tinywasm/deploy"
+	"webtyp.com/deploy"
 )
 
 func TestValidate_ValidSignature(t *testing.T) {

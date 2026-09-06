@@ -24,4 +24,4 @@ Automated Continuous Deployment (CD) framework for Windows/Linux. Designed aroun
 
 ## Dependencies
 
-- [`tinywasm/keyring`](../keyring) — Cross-platform secret storage (DPAPI on Windows, Keychain on macOS, Secret Service on Linux)
+- [`webtyp/keyring`](../keyring) — Cross-platform secret storage (DPAPI on Windows, Keychain on macOS, Secret Service on Linux)

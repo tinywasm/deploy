@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/tinywasm/deploy"
+	"webtyp.com/deploy"
 )
 
 // MockProcessManager records calls to Start and Stop.

@@ -1,11 +1,11 @@
 // Daemon composes the goflare Edge Worker compiler with the Puller orchestrator
-// into a single unit for tinywasm/app. app imports only tinywasm/deploy.
+// into a single unit for webtyp/app. app imports only webtyp/deploy.
 package deploy
 
 import (
-	"github.com/tinywasm/deploy/providers/cloudflare"
-	"github.com/tinywasm/keyring"
-	"github.com/tinywasm/wizard"
+	"webtyp.com/deploy/providers/cloudflare"
+	"webtyp.com/keyring"
+	"webtyp.com/wizard"
 )
 
 // DaemonConfig holds all configuration needed to initialise both the provider and Puller.

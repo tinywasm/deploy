@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tinywasm/context"
-	"github.com/tinywasm/wizard"
+	"webtyp.com/context"
+	"webtyp.com/wizard"
 )
 
 func init() {

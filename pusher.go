@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tinywasm/wizard"
+	"webtyp.com/wizard"
 )
 
 // Pusher defines the interface for a deployment method.
